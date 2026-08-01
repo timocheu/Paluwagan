@@ -179,7 +179,7 @@ class BatchController extends Controller
             'potWallet' => $batch->pot_address,
             'flash' => [
                 'success' => session('success'),
-                'error' => session('errors')['round'] ?? null,
+                'error' => session('errors') ? session('errors')->first('round') : null,
             ],
         ]);
     }

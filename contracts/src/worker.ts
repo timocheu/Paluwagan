@@ -60,14 +60,26 @@ function isRunArgs(value: unknown): value is RunArgs {
     );
 }
 
+/**
+ * Accept the args payload either as raw JSON (direct CLI use) or as base64
+ * (used by the Laravel side so Windows shells cannot strip the quotes).
+ */
+function parsePayload(raw: string): string {
+    if (raw.startsWith('{')) {
+        return raw;
+    }
+
+    return Buffer.from(raw, 'base64').toString('utf8');
+}
+
 function parseArgs(): RunArgs {
     const raw = process.argv[2];
 
     if (!raw) {
-        throw new Error('Usage: node src/worker.ts <json-args>');
+        throw new Error('Usage: node src/worker.ts <json-args | base64-json-args>');
     }
 
-    const value = JSON.parse(raw, (_key, item) =>
+    const value = JSON.parse(parsePayload(raw), (_key, item) =>
         typeof item === 'string' && /^\d+n?$/.test(item) ? BigInt(item.replace(/n$/, '')) : item,
     );
 

@@ -178,10 +178,29 @@ class RoundService
         $command = sprintf(
             'node %s %s',
             escapeshellarg(base_path('contracts/src/worker.ts')),
-            escapeshellarg(json_encode($args, JSON_THROW_ON_ERROR)),
+            base64_encode(json_encode($args, JSON_THROW_ON_ERROR)),
         );
 
-        $process = Process::run($command);
+        // Symfony Process captures output in temporary files. When TMP/TEMP
+        // are unset it falls back to the system directory (C:\WINDOWS), which
+        // the web worker cannot write to, so point it at a writable location.
+        $tempDir = storage_path('app/temp');
+        $previous = ['TMP' => getenv('TMP'), 'TEMP' => getenv('TEMP')];
+
+        if (! is_dir($tempDir)) {
+            mkdir($tempDir, 0777, true);
+        }
+
+        putenv('TMP='.$tempDir);
+        putenv('TEMP='.$tempDir);
+
+        try {
+            $process = Process::run($command);
+        } finally {
+            foreach ($previous as $name => $value) {
+                $value === false ? putenv($name) : putenv($name.'='.$value);
+            }
+        }
 
         if ($process->failed()) {
             $message = trim($process->errorOutput()) ?: trim($process->output());
