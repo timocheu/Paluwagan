@@ -63,27 +63,6 @@ const footerNavItems: NavItem[] = [
     },
 ];
 
-// Round status shown at a glance — swap the hardcoded values for props / a page prop
-// from your Inertia controller (e.g. current round, total rounds, percent complete).
-function RoundStatusCard({ current = 2, total = 4 }: { current?: number; total?: number }) {
-    const percent = Math.round((current / total) * 100);
-
-    return (
-        <div className="mx-2 mb-1 rounded-lg bg-neutral-900 p-3 text-white group-data-[collapsible=icon]:hidden">
-            <p className="text-xs font-medium">
-                Round {current} of {total} in progress
-            </p>
-            <Progress value={percent} className="mt-2 h-1.5 bg-neutral-700" />
-            <p className="mt-2 text-[11px] text-neutral-400">
-                Your trial ends in 10 days.{' '}
-                <Link href="#" className="text-white underline underline-offset-2">
-                    See plan
-                </Link>
-            </p>
-        </div>
-    );
-}
-
 export function AppSidebar() {
     return (
         <Sidebar collapsible="icon" variant="inset">
