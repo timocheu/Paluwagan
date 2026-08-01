@@ -3,26 +3,42 @@
 namespace App\Http\Controllers;
 
 use App\Models\Batch;
+use App\Models\BatchMember;
 use App\Models\Member;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Inertia\Inertia;
+use Inertia\Response;
 
 class BatchController extends Controller
 {
     /**
      * Display a listing of the resource.
      */
-    public function index()
+    public function index(): Response
     {
-        //
-    }
+        $batches = Batch::with('batchMembers.contributions')
+            ->orderByDesc('created_at')
+            ->get();
 
-    /**
-     * Show the form for creating a new resource.
-     */
-    public function create()
-    {
-        //
+        return Inertia::render('manager/batch', [
+            'batches' => $batches->map(fn (Batch $batch) => [
+                'id' => (string) $batch->id,
+                'name' => $batch->name,
+                'memberCount' => $batch->batchMembers->count(),
+                'pot' => $this->bch($batch->batchMembers->sum(
+                    fn (BatchMember $bm) => $bm->contributions->sum('amount_sats')
+                )),
+                'round' => [
+                    'current' => $batch->rounds_current,
+                    'total' => $batch->rounds_total,
+                ],
+                'contributionProgress' => $batch->rounds_total > 0
+                    ? (int) round($batch->rounds_current / $batch->rounds_total * 100)
+                    : 0,
+                'status' => $batch->status,
+            ]),
+        ]);
     }
 
     /**
@@ -60,38 +76,54 @@ class BatchController extends Controller
             ]);
         }
 
-        return redirect()->route('batches.index');
+        return redirect()->route('batches.show', $batch);
     }
 
     /**
      * Display the specified resource.
      */
-    public function show(string $id)
+    public function show(Batch $batch): Response
     {
-        //
+        $batch->load('batchMembers.member', 'batchMembers.contributions');
+
+        $members = $batch->batchMembers
+            ->sortBy('position')
+            ->map(fn (BatchMember $bm) => $this->memberPayload($batch, $bm))
+            ->values();
+
+        return Inertia::render('manager/members', [
+            'batchId' => (string) $batch->id,
+            'batchName' => $batch->name,
+            'members' => $members,
+        ]);
     }
 
-    /**
-     * Show the form for editing the specified resource.
-     */
-    public function edit(string $id)
+    private function memberPayload(Batch $batch, BatchMember $bm): array
     {
-        //
+        $totalDue = $batch->rounds_current * $batch->contribution_sats;
+        $saved = $bm->contributions->sum('amount_sats');
+        $percent = $totalDue > 0 ? (int) round(min($saved / $totalDue, 1) * 100) : 0;
+
+        return [
+            'id' => str_pad((string) $bm->id, 2, '0', STR_PAD_LEFT),
+            'name' => $bm->member->name ?? 'Member '.$bm->position,
+            'address' => $bm->member->wallet,
+            'contribution' => $this->bch($batch->contribution_sats),
+            'saved' => $this->bch($saved),
+            'progress' => $percent,
+            'percent' => $percent,
+            'due' => 'Round '.$batch->rounds_current,
+            'remaining' => $this->bch(max($totalDue - $saved, 0)),
+            'autoPay' => (bool) $bm->auto_pay,
+            'nextDate' => $bm->status === 'Slashed'
+                ? null
+                : 'Round '.($batch->rounds_current + 1),
+            'status' => $bm->status,
+        ];
     }
 
-    /**
-     * Update the specified resource in storage.
-     */
-    public function update(Request $request, string $id)
+    private function bch(int $sats): string
     {
-        //
-    }
-
-    /**
-     * Remove the specified resource from storage.
-     */
-    public function destroy(string $id)
-    {
-        //
+        return rtrim(rtrim(number_format($sats / 100_000_000, 8), '0'), '.').' BCH';
     }
 }

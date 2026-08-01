@@ -16,9 +16,11 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
+import { store } from '@/routes/members';
 
-export function CreateMemberDialog() {
+export function CreateMemberDialog({ batchId }: { batchId: string }) {
     const { data, setData, post, processing, errors, reset } = useForm({
+        batch_id: batchId,
         name: '',
         wallet: '',
         auto_pay: true,
@@ -27,7 +29,7 @@ export function CreateMemberDialog() {
     const submit: FormEventHandler = (e) => {
         e.preventDefault();
 
-        post('/members', {
+        post(store.url(), {
             onSuccess: () => reset(),
         });
     };

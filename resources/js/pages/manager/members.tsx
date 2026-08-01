@@ -1,5 +1,13 @@
 import { Head, Link } from '@inertiajs/react';
-import { ArrowLeft, Banknote, ChevronDown, Clock3, Info, MoreHorizontal, Plus } from 'lucide-react';
+import {
+    ArrowLeft,
+    Banknote,
+    ChevronDown,
+    Clock3,
+    Info,
+    MoreHorizontal,
+    Plus,
+} from 'lucide-react';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -93,7 +101,13 @@ const defaultMembers: Member[] = [
     },
 ];
 
-function TopBar({ batchName }: { batchName: string }) {
+function TopBar({
+    batchName,
+    batchId,
+}: {
+    batchName: string;
+    batchId: string;
+}) {
     return (
         <div className="px-8 pt-8 pb-6">
             <Link
@@ -108,18 +122,25 @@ function TopBar({ batchName }: { batchName: string }) {
                 <div className="flex items-center gap-3">
                     <DropdownMenu>
                         <DropdownMenuTrigger asChild>
-                            <Button variant="outline" className="gap-2 font-normal">
+                            <Button
+                                variant="outline"
+                                className="gap-2 font-normal"
+                            >
                                 <span className="h-5 w-6 rounded bg-emerald-600" />
                                 •••• 6799
                                 <ChevronDown className="h-3.5 w-3.5 text-muted-foreground" />
                             </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
-                            <DropdownMenuItem>bchtest:qqvh6w...6799</DropdownMenuItem>
-                            <DropdownMenuItem>bchtest:qzfx9j...2vqk</DropdownMenuItem>
+                            <DropdownMenuItem>
+                                bchtest:qqvh6w...6799
+                            </DropdownMenuItem>
+                            <DropdownMenuItem>
+                                bchtest:qzfx9j...2vqk
+                            </DropdownMenuItem>
                         </DropdownMenuContent>
                     </DropdownMenu>
-                    <CreateMemberDialog />
+                    <CreateMemberDialog batchId={batchId} />
                 </div>
             </div>
         </div>
@@ -135,10 +156,15 @@ function TotalBalanceCard() {
                         Total pot balance
                         <Info className="h-3.5 w-3.5" />
                     </div>
-                    <p className="text-3xl font-semibold tracking-tight">2.0 BCH</p>
+                    <p className="text-3xl font-semibold tracking-tight">
+                        2.0 BCH
+                    </p>
                 </div>
                 <div className="flex h-11 w-11 items-center justify-center rounded-full bg-emerald-50">
-                    <Banknote className="h-5 w-5 text-emerald-600" strokeWidth={1.75} />
+                    <Banknote
+                        className="h-5 w-5 text-emerald-600"
+                        strokeWidth={1.75}
+                    />
                 </div>
             </CardContent>
         </Card>
@@ -150,8 +176,8 @@ function MemberCard({ member }: { member: Member }) {
         member.status === 'Released'
             ? 'text-emerald-700 bg-emerald-50'
             : member.status === 'Slashed'
-                ? 'text-red-700 bg-red-50'
-                : 'text-neutral-600 bg-neutral-100';
+              ? 'text-red-700 bg-red-50'
+              : 'text-neutral-600 bg-neutral-100';
 
     return (
         <Card className="rounded-2xl border-neutral-200 shadow-none">
@@ -163,8 +189,12 @@ function MemberCard({ member }: { member: Member }) {
                         </AvatarFallback>
                     </Avatar>
                     <div>
-                        <p className="text-sm leading-none font-medium">{member.name}</p>
-                        <p className="mt-1 font-mono text-[11px] text-muted-foreground">{member.address}</p>
+                        <p className="text-sm leading-none font-medium">
+                            {member.name}
+                        </p>
+                        <p className="mt-1 font-mono text-[11px] text-muted-foreground">
+                            {member.address}
+                        </p>
                     </div>
                 </div>
                 <Button variant="ghost" size="icon" className="-mr-1.5 h-7 w-7">
@@ -173,16 +203,22 @@ function MemberCard({ member }: { member: Member }) {
             </CardHeader>
 
             <CardContent className="space-y-4 p-5 pt-4">
-                <p className="text-xl font-semibold tracking-tight">{member.contribution}</p>
+                <p className="text-xl font-semibold tracking-tight">
+                    {member.contribution}
+                </p>
 
                 <div className="space-y-2">
                     <Progress value={member.progress} className="h-1.5" />
                     <div className="flex items-center justify-between text-sm">
                         <span>
                             <span className="font-medium">{member.saved}</span>{' '}
-                            <span className="text-muted-foreground">contributed</span>
+                            <span className="text-muted-foreground">
+                                contributed
+                            </span>
                         </span>
-                        <span className="text-muted-foreground">{member.percent}%</span>
+                        <span className="text-muted-foreground">
+                            {member.percent}%
+                        </span>
                     </div>
                 </div>
 
@@ -194,16 +230,17 @@ function MemberCard({ member }: { member: Member }) {
                     <span className="text-muted-foreground">Remaining</span>
                     <span>{member.remaining}</span>
                 </div>
-
             </CardContent>
         </Card>
     );
 }
 
 export default function MembersDashboard({
+    batchId = '',
     batchName = 'Circle Alpha',
     members = defaultMembers,
 }: {
+    batchId?: string;
     batchName?: string;
     members?: Member[];
 }) {
@@ -211,7 +248,7 @@ export default function MembersDashboard({
         <>
             <Head title={batchName} />
 
-            <TopBar batchName={batchName} />
+            <TopBar batchName={batchName} batchId={batchId} />
 
             <div className="space-y-5 px-8 pb-12">
                 <TotalBalanceCard />

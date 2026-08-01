@@ -1,7 +1,6 @@
 <?php
 
 use App\Models\Batch;
-use App\Models\BatchMember;
 use App\Models\Member;
 
 it('creates a batch with members and their rotation positions', function () {
@@ -16,9 +15,9 @@ it('creates a batch with members and their rotation positions', function () {
         ],
     ]);
 
-    $response->assertRedirect(route('batches.index'));
+    $response->assertRedirect(route('batches.show', $batch = Batch::where('name', 'Circle Alpha')->firstOrFail()));
 
-    $batch = Batch::where('name', 'Circle Alpha')->firstOrFail();
+    $batch = $batch->refresh();
 
     expect($batch->contribution_sats)->toBe(50_000_000);
     expect($batch->schedule)->toBe('monthly');

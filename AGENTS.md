@@ -1,6 +1,9 @@
 <laravel-boost-guidelines>
 === foundation rules ===
 
+# Remember
+We are on a hackathon, do less uncessary movements or processes just focus on building.
+
 # Laravel Boost Guidelines
 
 The Laravel Boost guidelines are specifically curated by Laravel maintainers for this application. These guidelines should be followed closely to ensure the best experience when building Laravel applications.
