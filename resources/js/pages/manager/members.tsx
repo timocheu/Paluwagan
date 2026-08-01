@@ -23,7 +23,7 @@ import {
 import { Progress } from '@/components/ui/progress';
 import AppLayout from '@/layouts/app-layout';
 import { useState } from 'react';
-import { Check, Copy } from 'lucide-react';
+import { Check, Copy, Send, ArrowDownLeft } from 'lucide-react';
 import { advance, expire } from '@/routes/batches';
 
 type MemberStatus = 'Released' | 'Active' | 'Slashed';
@@ -345,6 +345,142 @@ function MemberCard({ member }: { member: Member }) {
     );
 }
 
+interface Transaction {
+    id: string;
+    name: string;
+    batch: string;
+    walletAddress: string;
+    amount: string;
+    dateTime: string;
+    type: 'sent' | 'received';
+}
+
+const dummyTransactions: Transaction[] = [
+    {
+        id: '1',
+        name: 'Member 1',
+        batch: 'Circle Alpha',
+        walletAddress: 'bchtest:qqvh6w...6799',
+        amount: '0.5 BCH',
+        dateTime: '2024-01-15 10:30 AM',
+        type: 'sent',
+    },
+    {
+        id: '2',
+        name: 'Member 2',
+        batch: 'Circle Alpha',
+        walletAddress: 'bchtest:qzfx9j...2vqk',
+        amount: '0.5 BCH',
+        dateTime: '2024-01-16 02:15 PM',
+        type: 'sent',
+    },
+    {
+        id: '3',
+        name: 'Member 3',
+        batch: 'Circle Beta',
+        walletAddress: 'bchtest:qpwa...91m',
+        amount: '0.5 BCH',
+        dateTime: '2024-01-17 09:45 AM',
+        type: 'received',
+    },
+    {
+        id: '4',
+        name: 'Member',
+        batch: 'Circle Gamma',
+        walletAddress: 'bchtest:qr7t...g7h',
+        amount: '0.5 BCH',
+        dateTime: '2024-01-18 04:20 PM',
+        type: 'sent',
+    },
+    {
+        id: '5',
+        name: 'Member 1',
+        batch: 'Circle Alpha',
+        walletAddress: 'bchtest:qqvh6w...6799',
+        amount: '0.5 BCH',
+        dateTime: '2024-01-19 11:00 AM',
+        type: 'received',
+    },
+];
+
+function TransactionLog({ memberWallet }: { memberWallet: string }) {
+    const filteredTransactions = dummyTransactions.filter(
+        (tx) => tx.walletAddress === memberWallet || tx.name === memberWallet
+    );
+
+    return (
+        <Card className="rounded-2xl border-neutral-200 shadow-none sticky top-24 h-fit">
+            <CardHeader className="p-5 pb-3">
+                <h3 className="text-lg font-semibold">Transaction History</h3>
+                <p className="text-sm text-muted-foreground mt-1">
+                    All transactions for this wallet
+                </p>
+            </CardHeader>
+            <CardContent className="p-5 pt-0">
+                <div className="space-y-3 max-h-[500px] overflow-y-auto">
+                    {filteredTransactions.length === 0 ? (
+                        <div className="text-center py-8 text-muted-foreground">
+                            <Send className="h-8 w-8 mx-auto mb-2 opacity-50" />
+                            <p className="text-sm">No transactions found</p>
+                        </div>
+                    ) : (
+                        filteredTransactions.map((tx) => (
+                            <div
+                                key={tx.id}
+                                className="flex items-start gap-3 p-3 rounded-lg border border-neutral-100 hover:border-neutral-200 transition-colors"
+                            >
+                                <div
+                                    className={`flex h-8 w-8 items-center justify-center rounded-full ${
+                                        tx.type === 'sent'
+                                            ? 'bg-emerald-100 text-emerald-600'
+                                            : 'bg-blue-100 text-blue-600'
+                                    }`}
+                                >
+                                    {tx.type === 'sent' ? (
+                                        <ArrowDownLeft className="h-4 w-4" />
+                                    ) : (
+                                        <Send className="h-4 w-4" />
+                                    )}
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                    <div className="flex items-center justify-between gap-2">
+                                        <p className="text-sm font-medium truncate">
+                                            {tx.name || 'Member'}
+                                        </p>
+                                        <span
+                                            className={`text-xs px-2 py-0.5 rounded-full ${
+                                                tx.type === 'sent'
+                                                    ? 'bg-emerald-100 text-emerald-700'
+                                                    : 'bg-blue-100 text-blue-700'
+                                            }`}
+                                        >
+                                            {tx.type === 'sent' ? 'Sent' : 'Received'}
+                                        </span>
+                                    </div>
+                                    <div className="flex items-center gap-2 mt-1 text-xs text-muted-foreground">
+                                        <span className="font-mono truncate flex-1">
+                                            {tx.walletAddress}
+                                        </span>
+                                        <span className="whitespace-nowrap">{tx.batch}</span>
+                                    </div>
+                                    <div className="flex items-center justify-between mt-1">
+                                        <span className="text-sm font-medium">
+                                            {tx.amount}
+                                        </span>
+                                        <span className="text-xs text-muted-foreground">
+                                            {tx.dateTime}
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                        ))
+                    )}
+                </div>
+            </CardContent>
+        </Card>
+    );
+}
+
 export default function MembersDashboard({
     batchId = '',
     batchName = 'Circle Alpha',
@@ -385,10 +521,17 @@ export default function MembersDashboard({
                     flash={flash}
                 />
 
-                <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
-                    {members.map((m) => (
-                        <MemberCard key={m.id} member={m} />
-                    ))}
+                <div className="grid grid-cols-1 lg:grid-cols-4 gap-5">
+                    <div className="lg:col-span-3">
+                        <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
+                            {members.map((m) => (
+                                <MemberCard key={m.id} member={m} />
+                            ))}
+                        </div>
+                    </div>
+                    <div className="lg:col-span-1">
+                        <TransactionLog memberWallet={members[0]?.address || ''} />
+                    </div>
                 </div>
             </div>
         </>
