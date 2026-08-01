@@ -1,0 +1,60 @@
+{
+  "contractName": "RoundPot",
+  "constructorInputs": [
+    { "name": "recipientPkh", "type": "bytes20" },
+    { "name": "organizerPkh", "type": "bytes20" },
+    { "name": "contributionSats", "type": "int" },
+    { "name": "memberCount", "type": "int" },
+    { "name": "startBlock", "type": "int" },
+    { "name": "deadline", "type": "int" }
+  ],
+  "abi": [
+    {
+      "name": "claim",
+      "inputs": [
+        { "name": "pk", "type": "pubkey" },
+        { "name": "s", "type": "sig" }
+      ]
+    },
+    {
+      "name": "timeout",
+      "inputs": [
+        { "name": "organizerPk", "type": "pubkey" },
+        { "name": "s", "type": "sig" }
+      ]
+    }
+  ],
+  "bytecode": "OP_6 OP_PICK OP_0 OP_NUMEQUAL OP_IF OP_TXLOCKTIME OP_CHECKLOCKTIMEVERIFY OP_DROP OP_TXLOCKTIME OP_3 OP_ROLL OP_4 OP_ROLL OP_MUL d007 OP_2 OP_PICK OP_6 OP_ROLL OP_GREATERTHANOREQUAL OP_VERIFY OP_ROT OP_5 OP_ROLL OP_LESSTHANOREQUAL OP_VERIFY OP_5 OP_PICK OP_HASH160 OP_3 OP_PICK OP_EQUALVERIFY OP_6 OP_ROLL OP_6 OP_ROLL OP_CHECKSIGVERIFY 76a914 OP_3 OP_ROLL OP_CAT 88ac OP_CAT OP_0 OP_OUTPUTBYTECODE OP_EQUALVERIFY OP_0 OP_OUTPUTVALUE OP_ROT OP_ROT OP_SUB OP_NUMEQUAL OP_NIP OP_NIP OP_ELSE OP_6 OP_ROLL OP_1 OP_NUMEQUALVERIFY OP_TXLOCKTIME OP_CHECKLOCKTIMEVERIFY OP_DROP OP_TXLOCKTIME OP_3 OP_ROLL OP_4 OP_ROLL OP_MUL d007 OP_ROT OP_6 OP_ROLL OP_GREATERTHAN OP_VERIFY OP_5 OP_PICK OP_HASH160 OP_4 OP_ROLL OP_EQUALVERIFY OP_5 OP_ROLL OP_5 OP_PICK OP_CHECKSIGVERIFY 76a914 OP_5 OP_ROLL OP_HASH160 OP_CAT 88ac OP_CAT OP_0 OP_OUTPUTBYTECODE OP_EQUALVERIFY OP_0 OP_OUTPUTVALUE OP_ROT OP_ROT OP_SUB OP_NUMEQUAL OP_NIP OP_NIP OP_ENDIF",
+  "source": "pragma cashscript ^0.13.0;\n\n// Per-round ROSCA pot contract.\n//\n// Each member contributes `contributionSats` to this contract during the\n// round. Once the full pot (`contributionSats * memberCount`) is locked,\n// the round's recipient can `claim()` the pot within `[startBlock, deadline]`.\n// If nobody claims in time, the organizer can `timeout()` and reclaim the\n// pot, so funds are never stuck.\ncontract RoundPot(\n    bytes20 recipientPkh,\n    bytes20 organizerPkh,\n    int contributionSats,\n    int memberCount,\n    int startBlock,\n    int deadline\n) {\n    // The round recipient withdraws the full pot.\n    function claim(pubkey pk, sig s) {\n        int time = tx.locktime;\n        int pot = contributionSats * memberCount;\n        int minerFee = 2000;\n\n        require(time >= startBlock, \"Round has not started\");\n        require(time <= deadline, \"Round has expired\");\n\n        require(hash160(pk) == recipientPkh, \"Not the round recipient\");\n        require(checkSig(s, pk), \"Invalid recipient signature\");\n\n        bytes25 recipientLockingBytecode = new LockingBytecodeP2PKH(recipientPkh);\n        require(tx.outputs[0].lockingBytecode == recipientLockingBytecode, \"First output must pay the recipient\");\n        require(tx.outputs[0].value == pot - minerFee, \"Pot amount must match\");\n    }\n\n    // After the deadline, the organizer reclaims the unclaimed pot.\n    function timeout(pubkey organizerPk, sig s) {\n        int time = tx.locktime;\n        int pot = contributionSats * memberCount;\n        int minerFee = 2000;\n\n        require(time > deadline, \"Round is still live\");\n        require(hash160(organizerPk) == organizerPkh, \"Not the organizer\");\n        require(checkSig(s, organizerPk), \"Invalid organizer signature\");\n\n        bytes25 organizerLockingBytecode = new LockingBytecodeP2PKH(hash160(organizerPk));\n        require(tx.outputs[0].lockingBytecode == organizerLockingBytecode, \"First output must pay the organizer\");\n        require(tx.outputs[0].value == pot - minerFee, \"Pot amount must match\");\n    }\n}\n",
+  "fingerprint": "9d94d08251b69a3c86af98d3d3250b636f3afe64fa7f0e92c0b09bbc66795a8e",
+  "debug": {
+    "bytecode": "5679009c63c5b175c5537a547a9502d0075279567aa2697b557aa1695579a9537988567a567aad0376a914537a7e0288ac7e00cd8800cc7b7b949c777767567a519dc5b175c5537a547a9502d0077b567aa0695579a9547a88557a5579ad0376a914557aa97e0288ac7e00cd8800cc7b7b949c777768",
+    "sourceMap": "19:4:33:5;;;;;:37:19:37;::::1;;20:19:20:30:0;21:18:21:34;;:37::48;;:18:::1;22:23:22:27:0;24:16:24:20;;:24::34;;:16:::1;:8::61;25:16:25:20:0;:24::32;;:16:::1;:8::55;27:24:27:26:0;;:16::27:1;:31::43:0;;:8::72:1;28:25:28:26:0;;:28::30;;:8::64:1;30:43:30:81:0;:68::80;;:43::81:1;;;31:27:31:28:0;:16::45:1;:8::114;32:27:32:28:0;:16::35:1;:39::42:0;:45::53;:39:::1;:8::80;19:37:33:5;;:4;36::48::0;;;;:48:36:48;::::1;;37:19:37:30:0;38:18:38:34;;:37::48;;:18:::1;39:23:39:27:0;41:16:41:20;:23::31;;:16:::1;:8::56;42:24:42:35:0;;:16::36:1;:40::52:0;;:8::75:1;43:25:43:26:0;;:28::39;;:8::73:1;45:43:45:89:0;:76::87;;:68::88:1;:43::89;;;46:27:46:28:0;:16::45:1;:8::114;47:27:47:28:0;:16::35:1;:39::42:0;:45::53;:39:::1;:8::80;36:48:48:5;;10:0:49:1",
+    "logs": [],
+    "requires": [
+      { "ip": 12, "line": 19, "message": "Using tx.locktime requires a non-final sequence number on the spending input" },
+      { "ip": 26, "line": 24, "message": "Round has not started" },
+      { "ip": 31, "line": 25, "message": "Round has expired" },
+      { "ip": 37, "line": 27, "message": "Not the round recipient" },
+      { "ip": 42, "line": 28, "message": "Invalid recipient signature" },
+      { "ip": 51, "line": 31, "message": "First output must pay the recipient" },
+      { "ip": 58, "line": 32, "message": "Pot amount must match" },
+      { "ip": 66, "line": 36, "message": "Using tx.locktime requires a non-final sequence number on the spending input" },
+      { "ip": 79, "line": 41, "message": "Round is still live" },
+      { "ip": 85, "line": 42, "message": "Not the organizer" },
+      { "ip": 90, "line": 43, "message": "Invalid organizer signature" },
+      { "ip": 100, "line": 46, "message": "First output must pay the organizer" },
+      { "ip": 107, "line": 47, "message": "Pot amount must match" }
+    ],
+    "sourceTags": "5:7:lg;52:53:sc;59:61:lg;101:102:sc"
+  },
+  "compiler": {
+    "name": "cashc",
+    "version": "0.13.2",
+    "options": {
+      "enforceFunctionParameterTypes": true,
+      "enforceLocktimeGuard": true
+    }
+  },
+  "updatedAt": "2026-08-01T07:03:50.892Z"
+}

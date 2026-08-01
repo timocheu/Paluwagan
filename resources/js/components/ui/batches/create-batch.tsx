@@ -34,16 +34,23 @@ const schedules = [
     { value: 'daily', label: 'Daily' },
 ] as const;
 
+const rotations = [
+    { value: 'fixed', label: 'Fixed', description: 'Payouts follow member order' },
+    { value: 'random', label: 'Random', description: 'Payout recipient drawn per round' },
+] as const;
+
 export function CreateBatchDialog() {
     const { data, setData, post, processing, errors, reset } = useForm<{
         name: string;
         contribution: string;
         schedule: string;
+        rotation: string;
         members: MemberInput[];
     }>({
         name: '',
         contribution: '',
         schedule: 'monthly',
+        rotation: 'fixed',
         members: [{ name: '', wallet: '' }],
     });
 
@@ -140,6 +147,31 @@ export function CreateBatchDialog() {
                                     </SelectContent>
                                 </Select>
                                 {errors.schedule && <p className="text-sm text-red-600">{errors.schedule}</p>}
+                            </div>
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-3">
+                            <div className="space-y-1.5">
+                                <Label htmlFor="batch-rotation">Payout order</Label>
+                                <Select
+                                    value={data.rotation}
+                                    onValueChange={(value) => setData('rotation', value)}
+                                >
+                                    <SelectTrigger id="batch-rotation" className="w-full">
+                                        <SelectValue placeholder="Select an order" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        {rotations.map((rotation) => (
+                                            <SelectItem key={rotation.value} value={rotation.value}>
+                                                {rotation.label}
+                                            </SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
+                                <p className="text-xs text-muted-foreground">
+                                    {rotations.find((r) => r.value === data.rotation)?.description}
+                                </p>
+                                {errors.rotation && <p className="text-sm text-red-600">{errors.rotation}</p>}
                             </div>
                         </div>
 

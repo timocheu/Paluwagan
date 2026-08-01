@@ -8,6 +8,7 @@ it('creates a batch with members and their rotation positions', function () {
         'name' => 'Circle Alpha',
         'contribution' => '0.5',
         'schedule' => 'monthly',
+        'rotation' => 'fixed',
         'members' => [
             ['name' => 'Alice', 'wallet' => 'bchtest:aaaa1'],
             ['name' => null, 'wallet' => 'bchtest:bbbb2'],
@@ -21,6 +22,7 @@ it('creates a batch with members and their rotation positions', function () {
 
     expect($batch->contribution_sats)->toBe(50_000_000);
     expect($batch->schedule)->toBe('monthly');
+    expect($batch->rotation)->toBe('fixed');
     expect($batch->rounds_total)->toBe(3);
     expect($batch->status)->toBe('Forming');
 
@@ -34,11 +36,46 @@ it('creates a batch with members and their rotation positions', function () {
     expect(Member::count())->toBe(3);
 });
 
+it('stores a random rotation batch', function () {
+    $response = $this->post(route('batches.store'), [
+        'name' => 'Circle Random',
+        'contribution' => '1',
+        'schedule' => 'weekly',
+        'rotation' => 'random',
+        'members' => [
+            ['name' => 'Alice', 'wallet' => 'bchtest:aaaa1'],
+            ['name' => 'Bob', 'wallet' => 'bchtest:bbbb2'],
+        ],
+    ]);
+
+    $response->assertRedirect(route('batches.show', $batch = Batch::where('name', 'Circle Random')->firstOrFail()));
+
+    expect($batch->rotation)->toBe('random');
+    expect($batch->contribution_sats)->toBe(100_000_000);
+});
+
+it('rejects an unknown rotation mode', function () {
+    $response = $this->post(route('batches.store'), [
+        'name' => 'Circle Bad Rotation',
+        'contribution' => '0.5',
+        'schedule' => 'monthly',
+        'rotation' => 'lottery',
+        'members' => [
+            ['name' => 'Alice', 'wallet' => 'bchtest:aaaa1'],
+            ['name' => 'Bob', 'wallet' => 'bchtest:bbbb2'],
+        ],
+    ]);
+
+    $response->assertSessionHasErrors('rotation');
+    expect(Batch::count())->toBe(0);
+});
+
 it('rejects an invalid pay schedule', function () {
     $response = $this->post(route('batches.store'), [
         'name' => 'Circle Beta',
         'contribution' => '0.5',
         'schedule' => 'yearly',
+        'rotation' => 'fixed',
         'members' => [
             ['name' => 'Alice', 'wallet' => 'bchtest:aaaa1'],
             ['name' => 'Bob', 'wallet' => 'bchtest:bbbb2'],

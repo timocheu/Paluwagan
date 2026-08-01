@@ -49,6 +49,7 @@ class BatchController extends Controller
         $data = $request->validate([
             'name' => ['required', 'string', 'max:255'],
             'schedule' => ['required', 'in:monthly,weekly,daily'],
+            'rotation' => ['required', 'in:fixed,random'],
             'contribution' => ['required', 'numeric', 'min:0.00000001'],
             'members' => ['required', 'array', 'min:2'],
             'members.*.name' => ['nullable', 'string', 'max:255'],
@@ -60,6 +61,7 @@ class BatchController extends Controller
         $batch = Batch::create([
             'name' => $data['name'],
             'schedule' => $data['schedule'],
+            'rotation' => $data['rotation'],
             'contribution_sats' => $contributionSats,
             'rounds_total' => count($data['members']),
         ]);

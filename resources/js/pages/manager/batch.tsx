@@ -1,9 +1,10 @@
 import { Head, Link } from '@inertiajs/react';
 import { Banknote, ChevronDown, Info, MoreHorizontal, Users } from 'lucide-react';
+import type { ReactNode } from 'react';
 import { Badge } from '@/components/ui/badge';
+import { CreateBatchDialog } from '@/components/ui/batches/create-batch';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
-import { CreateBatchDialog } from '@/components/ui/batches/create-batch';
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -12,7 +13,6 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Progress } from '@/components/ui/progress';
 import AppLayout from '@/layouts/app-layout';
-import type { ReactNode } from 'react';
 
 // Points at the batches.show route registered in routes/web.php.
 // Swap for a Wayfinder helper (e.g. import { show } from '@/routes/batches') once
@@ -121,8 +121,14 @@ function TotalValueCard({ batches }: { batches: Batch[] }) {
 }
 
 function statusBadgeClass(status: BatchStatus) {
-    if (status === 'Active') return 'text-emerald-700 bg-emerald-50';
-    if (status === 'Completed') return 'text-neutral-600 bg-neutral-100';
+    if (status === 'Active') {
+return 'text-emerald-700 bg-emerald-50';
+}
+
+    if (status === 'Completed') {
+return 'text-neutral-600 bg-neutral-100';
+}
+
     return 'text-amber-700 bg-amber-50';
 }
 

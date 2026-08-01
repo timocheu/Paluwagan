@@ -1,0 +1,49 @@
+pragma cashscript ^0.13.0;
+
+// Per-round ROSCA pot contract.
+//
+// Each member contributes `contributionSats` to this contract during the
+// round. Once the full pot (`contributionSats * memberCount`) is locked,
+// the round's recipient can `claim()` the pot within `[startBlock, deadline]`.
+// If nobody claims in time, the organizer can `timeout()` and reclaim the
+// pot, so funds are never stuck.
+contract RoundPot(
+    bytes20 recipientPkh,
+    bytes20 organizerPkh,
+    int contributionSats,
+    int memberCount,
+    int startBlock,
+    int deadline
+) {
+    // The round recipient withdraws the full pot.
+    function claim(pubkey pk, sig s) {
+        int time = tx.locktime;
+        int pot = contributionSats * memberCount;
+        int minerFee = 2000;
+
+        require(time >= startBlock, "Round has not started");
+        require(time <= deadline, "Round has expired");
+
+        require(hash160(pk) == recipientPkh, "Not the round recipient");
+        require(checkSig(s, pk), "Invalid recipient signature");
+
+        bytes25 recipientLockingBytecode = new LockingBytecodeP2PKH(recipientPkh);
+        require(tx.outputs[0].lockingBytecode == recipientLockingBytecode, "First output must pay the recipient");
+        require(tx.outputs[0].value == pot - minerFee, "Pot amount must match");
+    }
+
+    // After the deadline, the organizer reclaims the unclaimed pot.
+    function timeout(pubkey organizerPk, sig s) {
+        int time = tx.locktime;
+        int pot = contributionSats * memberCount;
+        int minerFee = 2000;
+
+        require(time > deadline, "Round is still live");
+        require(hash160(organizerPk) == organizerPkh, "Not the organizer");
+        require(checkSig(s, organizerPk), "Invalid organizer signature");
+
+        bytes25 organizerLockingBytecode = new LockingBytecodeP2PKH(hash160(organizerPk));
+        require(tx.outputs[0].lockingBytecode == organizerLockingBytecode, "First output must pay the organizer");
+        require(tx.outputs[0].value == pot - minerFee, "Pot amount must match");
+    }
+}

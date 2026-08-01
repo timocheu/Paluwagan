@@ -16,13 +16,14 @@ use Illuminate\Support\Carbon;
  * @property string $name
  * @property string $status
  * @property string $schedule
+ * @property string $rotation
  * @property int $contribution_sats
  * @property int $rounds_total
  * @property int $rounds_current
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
  */
-#[Fillable(['name', 'status', 'schedule', 'contribution_sats', 'rounds_total', 'rounds_current'])]
+#[Fillable(['name', 'status', 'schedule', 'rotation', 'contribution_sats', 'rounds_total', 'rounds_current'])]
 class Batch extends Model
 {
     /** @use HasFactory<BatchFactory> */
@@ -36,6 +37,7 @@ class Batch extends Model
     protected $attributes = [
         'status' => 'Forming',
         'schedule' => 'monthly',
+        'rotation' => 'fixed',
         'rounds_total' => 0,
         'rounds_current' => 0,
     ];

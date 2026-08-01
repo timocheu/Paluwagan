@@ -8,8 +8,10 @@ import {
     MoreHorizontal,
     Plus,
 } from 'lucide-react';
+import type { ReactNode } from 'react';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
+import { CreateMemberDialog } from '@/components/ui/batches/create-member';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import {
@@ -22,8 +24,6 @@ import { Progress } from '@/components/ui/progress';
 import { Separator } from '@/components/ui/separator';
 import { Switch } from '@/components/ui/switch';
 import AppLayout from '@/layouts/app-layout';
-import type { ReactNode } from 'react';
-import { CreateMemberDialog } from '@/components/ui/batches/create-member';
 
 type MemberStatus = 'Released' | 'Active' | 'Slashed';
 
