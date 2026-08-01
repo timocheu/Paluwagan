@@ -23,7 +23,7 @@ import {
 import { Progress } from '@/components/ui/progress';
 import AppLayout from '@/layouts/app-layout';
 import { useState } from 'react';
-import { Check, Copy, Send, ArrowDownLeft } from 'lucide-react';
+import { Check, Copy } from 'lucide-react';
 import { advance, expire, index, show } from '@/routes/batches';
 
 type MemberStatus = 'Released' | 'Active' | 'Slashed';
@@ -349,69 +349,53 @@ function MemberCard({ member }: { member: Member }) {
 
 interface Transaction {
     id: string;
-    name: string;
-    batch: string;
-    walletAddress: string;
+    txid: string;
     amount: string;
-    dateTime: string;
-    type: 'sent' | 'received';
+    time: string;
+    paidTo: string;
 }
 
 const dummyTransactions: Transaction[] = [
     {
         id: '1',
-        name: 'Member 1',
-        batch: 'Circle Alpha',
-        walletAddress: 'bchtest:qqvh6w...6799',
+        txid: 'b7c3f2a9...e41d',
         amount: '0.5 BCH',
-        dateTime: '2024-01-15 10:30 AM',
-        type: 'sent',
+        time: '2024-01-15 10:30 AM',
+        paidTo: 'Member 2',
     },
     {
         id: '2',
-        name: 'Member 2',
-        batch: 'Circle Alpha',
-        walletAddress: 'bchtest:qzfx9j...2vqk',
+        txid: '9d21e8c4...ab77',
         amount: '0.5 BCH',
-        dateTime: '2024-01-16 02:15 PM',
-        type: 'sent',
+        time: '2024-01-16 02:15 PM',
+        paidTo: 'Member 3',
     },
     {
         id: '3',
-        name: 'Member 3',
-        batch: 'Circle Beta',
-        walletAddress: 'bchtest:qpwa...91m',
+        txid: 'f04d1b6e...88c2',
         amount: '0.5 BCH',
-        dateTime: '2024-01-17 09:45 AM',
-        type: 'received',
+        time: '2024-01-17 09:45 AM',
+        paidTo: 'Member 4',
     },
     {
         id: '4',
-        name: 'Member',
-        batch: 'Circle Gamma',
-        walletAddress: 'bchtest:qr7t...g7h',
+        txid: 'c81a7f3d...b0e9',
         amount: '0.5 BCH',
-        dateTime: '2024-01-18 04:20 PM',
-        type: 'sent',
+        time: '2024-01-18 04:20 PM',
+        paidTo: 'Member 1',
     },
     {
         id: '5',
-        name: 'Member 1',
-        batch: 'Circle Alpha',
-        walletAddress: 'bchtest:qqvh6w...6799',
+        txid: 'e5b9d042...f3a6',
         amount: '0.5 BCH',
-        dateTime: '2024-01-19 11:00 AM',
-        type: 'received',
+        time: '2024-01-19 11:00 AM',
+        paidTo: 'Member 2',
     },
 ];
 
-function TransactionLog({ memberWallet }: { memberWallet: string }) {
-    const filteredTransactions = dummyTransactions.filter(
-        (tx) => tx.walletAddress === memberWallet || tx.name === memberWallet
-    );
-
+function TransactionLog() {
     return (
-        <Card className="rounded-2xl border-neutral-200 shadow-none sticky top-24 h-fit">
+        <Card className="rounded-2xl border-neutral-200 shadow-none">
             <CardHeader className="p-5 pb-3">
                 <h3 className="text-lg font-semibold">Transaction History</h3>
                 <p className="text-sm text-muted-foreground mt-1">
@@ -419,64 +403,47 @@ function TransactionLog({ memberWallet }: { memberWallet: string }) {
                 </p>
             </CardHeader>
             <CardContent className="p-5 pt-0">
-                <div className="space-y-3 max-h-[500px] overflow-y-auto">
-                    {filteredTransactions.length === 0 ? (
-                        <div className="text-center py-8 text-muted-foreground">
-                            <Send className="h-8 w-8 mx-auto mb-2 opacity-50" />
-                            <p className="text-sm">No transactions found</p>
-                        </div>
-                    ) : (
-                        filteredTransactions.map((tx) => (
-                            <div
-                                key={tx.id}
-                                className="flex items-start gap-3 p-3 rounded-lg border border-neutral-100 hover:border-neutral-200 transition-colors"
-                            >
-                                <div
-                                    className={`flex h-8 w-8 items-center justify-center rounded-full ${
-                                        tx.type === 'sent'
-                                            ? 'bg-[#635BFF]/10 text-[#635BFF]'
-                                            : 'bg-[#00D4FF]/10 text-[#00A3C4]'
-                                    }`}
-                                >
-                                    {tx.type === 'sent' ? (
-                                        <ArrowDownLeft className="h-4 w-4" />
-                                    ) : (
-                                        <Send className="h-4 w-4" />
-                                    )}
-                                </div>
-                                <div className="flex-1 min-w-0">
-                                    <div className="flex items-center justify-between gap-2">
-                                        <p className="text-sm font-medium truncate text-[#0A2540]">
-                                            {tx.name || 'Member'}
-                                        </p>
-                                        <span
-                                            className={`text-xs px-2 py-0.5 rounded-full ${
-                                                tx.type === 'sent'
-                                                    ? 'bg-[#635BFF]/10 text-[#635BFF]'
-                                                    : 'bg-[#00D4FF]/10 text-[#00A3C4]'
-                                            }`}
-                                        >
-                                            {tx.type === 'sent' ? 'Sent' : 'Received'}
-                                        </span>
-                                    </div>
-                                    <div className="flex items-center gap-2 mt-1 text-xs text-muted-foreground">
-                                        <span className="font-mono truncate flex-1">
-                                            {tx.walletAddress}
-                                        </span>
-                                        <span className="whitespace-nowrap">{tx.batch}</span>
-                                    </div>
-                                    <div className="flex items-center justify-between mt-1">
-                                        <span className="text-sm font-medium">
+                <div className="max-h-[400px] overflow-y-auto rounded-lg border border-neutral-100">
+                    <table className="w-full text-sm">
+                        <thead className="sticky top-0 bg-neutral-50 text-left text-xs uppercase tracking-wide text-muted-foreground">
+                            <tr>
+                                <th className="px-4 py-3 font-medium">Txid</th>
+                                <th className="px-4 py-3 font-medium">Amount</th>
+                                <th className="px-4 py-3 font-medium">Time</th>
+                                <th className="px-4 py-3 font-medium">Paid to</th>
+                            </tr>
+                        </thead>
+                        <tbody className="divide-y divide-neutral-100">
+                            {dummyTransactions.length === 0 ? (
+                                <tr>
+                                    <td
+                                        colSpan={4}
+                                        className="px-4 py-8 text-center text-muted-foreground"
+                                    >
+                                        No transactions found
+                                    </td>
+                                </tr>
+                            ) : (
+                                dummyTransactions.map((tx) => (
+                                    <tr
+                                        key={tx.id}
+                                        className="transition-colors hover:bg-neutral-50"
+                                    >
+                                        <td className="px-4 py-3 font-mono text-xs">
+                                            {tx.txid}
+                                        </td>
+                                        <td className="px-4 py-3 font-medium text-[#0A2540]">
                                             {tx.amount}
-                                        </span>
-                                        <span className="text-xs text-muted-foreground">
-                                            {tx.dateTime}
-                                        </span>
-                                    </div>
-                                </div>
-                            </div>
-                        ))
-                    )}
+                                        </td>
+                                        <td className="px-4 py-3 whitespace-nowrap text-muted-foreground">
+                                            {tx.time}
+                                        </td>
+                                        <td className="px-4 py-3">{tx.paidTo}</td>
+                                    </tr>
+                                ))
+                            )}
+                        </tbody>
+                    </table>
                 </div>
             </CardContent>
         </Card>
@@ -515,14 +482,9 @@ export default function MembersDashboard({
             <div className="space-y-5 px-8 pb-12">
                 <TotalBalanceCard total={totalPotBalance} />
 
-                <RoundControls
-                    batchId={batchId}
-                    rounds={rounds}
-                    batchStatus={batchStatus}
-                    potContract={potContract}
-                    flash={flash}
-                />
-
+                <div className="mt-5">
+                    <TransactionLog />
+                </div>
                 <div className="grid grid-cols-1 lg:grid-cols-4 gap-5">
                     <div className="lg:col-span-3">
                         <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
@@ -530,9 +492,18 @@ export default function MembersDashboard({
                                 <MemberCard key={m.id} member={m} />
                             ))}
                         </div>
+
                     </div>
                     <div className="lg:col-span-1">
-                        <TransactionLog memberWallet={members[0]?.address || ''} />
+                        <div className="sticky top-24 space-y-5">
+                            <RoundControls
+                                batchId={batchId}
+                                rounds={rounds}
+                                batchStatus={batchStatus}
+                                potContract={potContract}
+                                flash={flash}
+                            />
+                        </div>
                     </div>
                 </div>
             </div>
