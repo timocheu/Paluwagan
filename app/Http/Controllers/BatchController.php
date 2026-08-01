@@ -96,6 +96,18 @@ class BatchController extends Controller
             Log::warning('Could not derive batch pot wallet.', ['batchId' => $batch->id, 'message' => $e->getMessage()]);
         }
 
+        $sessionWallet = session('member_wallet');
+
+        if ($sessionWallet !== null) {
+            $isOwnedBySessionMember = collect($data['members'])->contains(
+                fn (array $memberData) => $memberData['wallet'] === $sessionWallet
+            );
+
+            if ($isOwnedBySessionMember) {
+                return redirect()->route('member.batch');
+            }
+        }
+
         return redirect()->route('batches.show', $batch);
     }
 

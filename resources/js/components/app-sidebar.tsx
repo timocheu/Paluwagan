@@ -1,4 +1,4 @@
-import { Link } from '@inertiajs/react';
+import { Link, usePage } from '@inertiajs/react';
 import { Banknote, BookOpen, Users, Wallet } from 'lucide-react';
 import AppLogo from '@/components/app-logo';
 import { NavFooter } from '@/components/nav-footer';
@@ -14,9 +14,10 @@ import {
     SidebarMenuItem,
 } from '@/components/ui/sidebar';
 import { index } from '@/routes/batches';
+import { batch } from '@/routes/member';
 import type { NavItem } from '@/types';
 
-const mainNavItems: NavItem[] = [
+const managerNavItems: NavItem[] = [
     {
         title: 'Batches',
         href: index(),
@@ -34,6 +35,14 @@ const mainNavItems: NavItem[] = [
     },
 ];
 
+const memberNavItems: NavItem[] = [
+    {
+        title: 'My Savings Circles',
+        href: batch(),
+        icon: Users,
+    },
+];
+
 const footerNavItems: NavItem[] = [
     {
         title: 'Website',
@@ -43,13 +52,16 @@ const footerNavItems: NavItem[] = [
 ];
 
 export function AppSidebar() {
+    const { url } = usePage();
+    const isMemberSide = url.startsWith('/member');
+
     return (
         <Sidebar collapsible="icon" variant="inset">
             <SidebarHeader>
                 <SidebarMenu>
                     <SidebarMenuItem>
                         <SidebarMenuButton size="lg" asChild>
-                            <Link href={index()} prefetch>
+                            <Link href={isMemberSide ? batch() : index()} prefetch>
                                 <AppLogo />
                             </Link>
                         </SidebarMenuButton>
@@ -58,7 +70,7 @@ export function AppSidebar() {
             </SidebarHeader>
 
             <SidebarContent>
-                <NavMain items={mainNavItems} />
+                <NavMain items={isMemberSide ? memberNavItems : managerNavItems} />
             </SidebarContent>
 
             <SidebarFooter>

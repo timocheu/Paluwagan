@@ -2,9 +2,15 @@
 
 use App\Http\Controllers\BatchController;
 use App\Http\Controllers\MemberController;
+use App\Http\Controllers\MemberPortalController;
 use Illuminate\Support\Facades\Route;
 
 Route::inertia('/', 'home/home')->name('home');
+
+Route::get('/member', [MemberPortalController::class, 'index'])->name('member.index');
+Route::post('/member/register', [MemberPortalController::class, 'register'])->name('member.register');
+Route::get('/member/batches', [MemberPortalController::class, 'batch'])->name('member.batch');
+Route::post('/member/forget', [MemberPortalController::class, 'forget'])->name('member.forget');
 
 Route::post('/batches', [BatchController::class, 'store'])->name('batches.store');
 Route::get('/batches', [BatchController::class, 'index'])->name('batches.index');
@@ -18,4 +24,4 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::inertia('dashboard', 'dashboard')->name('dashboard');
 });
 
-require __DIR__ . '/settings.php';
+require __DIR__.'/settings.php';

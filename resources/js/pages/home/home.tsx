@@ -128,6 +128,13 @@ function Navigation() {
 
                 <div className="flex items-center gap-3">
                     <Link
+                        href="/member"
+                        className="hidden items-center gap-2 rounded-lg border border-[#0A2540]/10 bg-white px-4 py-2 text-sm font-medium text-[#0A2540] transition-colors hover:border-[#0A2540]/20 sm:inline-flex"
+                    >
+                        Member
+                        <ArrowRight className="h-4 w-4" strokeWidth={2} />
+                    </Link>
+                    <Link
                         href="/batches"
                         className="hidden items-center gap-2 rounded-lg border border-[#0A2540]/10 bg-white px-4 py-2 text-sm font-medium text-[#0A2540] transition-colors hover:border-[#0A2540]/20 sm:inline-flex"
                     >
@@ -179,6 +186,12 @@ function Hero() {
                         >
                             Get Started
                             <ArrowRight className="h-4 w-4" strokeWidth={2} />
+                        </Link>
+                        <Link
+                            href="/member"
+                            className="inline-flex items-center gap-2 rounded-lg border border-[#0A2540]/10 bg-white px-6 py-3.5 text-base font-medium text-[#0A2540] transition-colors hover:border-[#0A2540]/20"
+                        >
+                            Join as Member
                         </Link>
                         <a
                             href="#how-it-works"
