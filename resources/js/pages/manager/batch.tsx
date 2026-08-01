@@ -130,12 +130,12 @@ function TotalValueCard({ batches }: { batches: Batch[] }) {
 
 function statusBadgeClass(status: BatchStatus) {
     if (status === 'Active') {
-return 'text-emerald-700 bg-emerald-50';
-}
+        return 'text-emerald-700 bg-emerald-50';
+    }
 
     if (status === 'Completed') {
-return 'text-neutral-600 bg-neutral-100';
-}
+        return 'text-neutral-600 bg-neutral-100';
+    }
 
     return 'text-amber-700 bg-amber-50';
 }
@@ -151,14 +151,6 @@ function BatchCard({ batch }: { batch: Batch }) {
                         </div>
                         <p className="text-sm leading-none font-medium text-[#0A2540]">{batch.name}</p>
                     </div>
-                    <Button
-                        variant="ghost"
-                        size="icon"
-                        className="-mr-1.5 h-7 w-7"
-                        onClick={(e) => e.preventDefault()}
-                    >
-                        <MoreHorizontal className="h-4 w-4 text-muted-foreground" />
-                    </Button>
                 </CardHeader>
 
                 <CardContent className="space-y-4 p-5 pt-4">
