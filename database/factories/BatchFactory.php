@@ -20,6 +20,7 @@ class BatchFactory extends Factory
         return [
             'name' => 'Circle '.ucfirst(fake()->unique()->word()),
             'status' => 'Forming',
+            'schedule' => fake()->randomElement(['monthly', 'weekly', 'daily']),
             'contribution_sats' => 50_000_000,
             'rounds_total' => fake()->numberBetween(4, 10),
             'rounds_current' => 0,

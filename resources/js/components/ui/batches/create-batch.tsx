@@ -2,6 +2,7 @@ import { useForm } from '@inertiajs/react';
 import { Plus, Trash2 } from 'lucide-react';
 import { FormEventHandler } from 'react';
 import { Button } from '@/components/ui/button';
+import { store } from '@/routes/batches';
 import {
     Dialog,
     DialogClose,
@@ -14,18 +15,35 @@ import {
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from '@/components/ui/select';
 
 interface MemberInput {
     name: string;
     wallet: string;
 }
 
+const schedules = [
+    { value: 'monthly', label: 'Monthly' },
+    { value: 'weekly', label: 'Weekly' },
+    { value: 'daily', label: 'Daily' },
+] as const;
+
 export function CreateBatchDialog() {
     const { data, setData, post, processing, errors, reset } = useForm<{
         name: string;
+        contribution: string;
+        schedule: string;
         members: MemberInput[];
     }>({
         name: '',
+        contribution: '',
+        schedule: 'monthly',
         members: [{ name: '', wallet: '' }],
     });
 
@@ -47,7 +65,7 @@ export function CreateBatchDialog() {
 
     const submit: FormEventHandler = (e) => {
         e.preventDefault();
-        post('/batches', {
+        post(store.url(), {
             onSuccess: () => reset(),
         });
     };
@@ -78,6 +96,51 @@ export function CreateBatchDialog() {
                                 required
                             />
                             {errors.name && <p className="text-sm text-red-600">{errors.name}</p>}
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-3">
+                            <div className="space-y-1.5">
+                                <Label htmlFor="batch-contribution">Agreed contribution</Label>
+                                <div className="relative">
+                                    <Input
+                                        id="batch-contribution"
+                                        type="number"
+                                        step="0.00000001"
+                                        min="0.00000001"
+                                        placeholder="0.5"
+                                        className="pr-12"
+                                        value={data.contribution}
+                                        onChange={(e) => setData('contribution', e.target.value)}
+                                        required
+                                    />
+                                    <span className="pointer-events-none absolute inset-y-0 right-3 flex items-center text-sm text-muted-foreground">
+                                        BCH
+                                    </span>
+                                </div>
+                                {errors.contribution && (
+                                    <p className="text-sm text-red-600">{errors.contribution}</p>
+                                )}
+                            </div>
+
+                            <div className="space-y-1.5">
+                                <Label htmlFor="batch-schedule">Pay schedule</Label>
+                                <Select
+                                    value={data.schedule}
+                                    onValueChange={(value) => setData('schedule', value)}
+                                >
+                                    <SelectTrigger id="batch-schedule" className="w-full">
+                                        <SelectValue placeholder="Select a schedule" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        {schedules.map((schedule) => (
+                                            <SelectItem key={schedule.value} value={schedule.value}>
+                                                {schedule.label}
+                                            </SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
+                                {errors.schedule && <p className="text-sm text-red-600">{errors.schedule}</p>}
+                            </div>
                         </div>
 
                         <div className="space-y-3">
