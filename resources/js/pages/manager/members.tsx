@@ -11,6 +11,7 @@ import {
 } from 'lucide-react';
 import type { ReactNode } from 'react';
 import { useState } from 'react';
+import { Amount } from '@/components/amount';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { CreateMemberDialog } from '@/components/ui/batches/create-member';
 import { Button } from '@/components/ui/button';
@@ -253,7 +254,7 @@ function TotalBalanceCard({ total }: { total: number }) {
                     </div>
 
                     <p className="text-3xl font-semibold tracking-tight text-[#0A2540]">
-                        {total.toFixed(2)} BCH
+                        <Amount value={`${total.toFixed(2)} BCH`} />
                     </p>
                 </div>
 
@@ -351,10 +352,10 @@ function RoundControls({
 }
 
 function BatchInformation({ info }: { info: BatchInfo }) {
-    const rows: Array<{ label: string; value: string | number }> = [
+    const rows: Array<{ label: string; value: string | number; currency?: boolean }> = [
         { label: 'Contribution Model', value: info.contributionModel },
-        { label: 'Contribution Amount', value: info.contributionAmount },
-        { label: 'Target Payout', value: info.targetPayout },
+        { label: 'Contribution Amount', value: info.contributionAmount, currency: true },
+        { label: 'Target Payout', value: info.targetPayout, currency: true },
         { label: 'Contribution Schedule', value: info.schedule },
         { label: 'Payout Order', value: info.rotation },
         { label: 'Members', value: info.memberCount },
@@ -386,7 +387,9 @@ function BatchInformation({ info }: { info: BatchInfo }) {
                             className="flex items-baseline justify-between gap-4 border-b border-neutral-100 pb-2"
                         >
                             <dt className="text-sm text-muted-foreground">{row.label}</dt>
-                            <dd className="text-sm font-medium text-[#0A2540]">{row.value}</dd>
+                            <dd className="text-sm font-medium text-[#0A2540]">
+                                {row.currency ? <Amount value={String(row.value)} /> : row.value}
+                            </dd>
                         </div>
                     ))}
                 </dl>
@@ -419,14 +422,14 @@ function MemberCard({ member }: { member: Member }) {
 
             <CardContent className="space-y-4 p-5 pt-4">
                 <p className="text-xl font-semibold tracking-tight text-[#0A2540]">
-                    {member.contribution}
+                    <Amount value={member.contribution} />
                 </p>
 
                 <div className="space-y-2">
                     <Progress value={member.progress} className="h-1.5" />
                     <div className="flex items-center justify-between text-sm">
                         <span>
-                            <span className="font-medium">{member.saved}</span>{' '}
+                            <Amount value={member.saved} subClassName="text-muted-foreground" />{' '}
                             <span className="text-muted-foreground">
                                 contributed
                             </span>
@@ -443,7 +446,7 @@ function MemberCard({ member }: { member: Member }) {
                 </div>
                 <div className="flex items-center justify-between text-sm">
                     <span className="text-muted-foreground">Remaining</span>
-                    <span>{member.remaining}</span>
+                    <span><Amount value={member.remaining} subClassName="text-muted-foreground" /></span>
                 </div>
             </CardContent>
         </Card>
@@ -508,7 +511,7 @@ function TransactionLog({ transactions }: { transactions: Transaction[] }) {
                                         </td>
                                         <td className="px-4 py-3">{tx.from}</td>
                                         <td className="px-4 py-3 font-medium text-[#0A2540]">
-                                            {tx.amount}
+                                            <Amount value={tx.amount} />
                                         </td>
                                         <td className="px-4 py-3 whitespace-nowrap text-muted-foreground">
                                             Round {tx.round}

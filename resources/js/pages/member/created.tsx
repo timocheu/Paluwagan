@@ -1,5 +1,6 @@
 import { Form, Head, Link } from '@inertiajs/react';
 import { ArrowRight, Layers, Users, Wallet } from 'lucide-react';
+import { Amount } from '@/components/amount';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
@@ -73,7 +74,7 @@ function CreatedBatchCard({ batch }: { batch: CreatedBatch }) {
                                 Target payout
                             </p>
                             <p className="text-xl font-semibold tracking-tight text-[#0A2540]">
-                                {batch.targetPayout}
+                                <Amount value={batch.targetPayout} />
                             </p>
                         </div>
                         <div className="text-right">
@@ -81,7 +82,7 @@ function CreatedBatchCard({ batch }: { batch: CreatedBatch }) {
                                 Contribution
                             </p>
                             <p className="text-sm font-medium text-[#0A2540]">
-                                {batch.contributionAmount}
+                                <Amount value={batch.contributionAmount} />
                             </p>
                         </div>
                     </div>

@@ -1,5 +1,4 @@
 import { Head, Link } from '@inertiajs/react';
-import type { MouseEvent } from 'react';
 import {
     ArrowRight,
     CheckCircle2,
@@ -13,6 +12,7 @@ import {
     Users,
     Wallet,
 } from 'lucide-react';
+import type { MouseEvent } from 'react';
 
 const navLinks = [
     { label: 'Features', href: '#features' },
@@ -66,21 +66,6 @@ const steps = [
         title: 'Automatic Payout',
         description:
             'The pot is released to the next recipient on schedule, recorded on-chain forever.',
-    },
-];
-
-const trustMetrics = [
-    {
-        value: '100%',
-        label: 'On-Chain Contributions',
-    },
-    {
-        value: '24/7',
-        label: 'Fund Visibility',
-    },
-    {
-        value: 'Automated',
-        label: 'Payout Verification',
     },
 ];
 

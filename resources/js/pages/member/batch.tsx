@@ -9,6 +9,7 @@ import {
     Users,
     Wallet,
 } from 'lucide-react';
+import { Amount } from '@/components/amount';
 import { Badge } from '@/components/ui/badge';
 import { CreateBatchDialog } from '@/components/ui/batches/create-batch';
 import { forget } from '@/routes/member';
@@ -95,7 +96,7 @@ function BatchSection({ batch, member, contributions, payoutRounds }: BatchView)
                                 Saved so far
                             </p>
                             <p className="mt-1 text-3xl font-semibold tracking-tight text-[#0A2540]">
-                                {member.saved}
+                                <Amount value={member.saved} />
                             </p>
                         </div>
                         <span className="text-2xl font-semibold text-[#635BFF]">
@@ -144,7 +145,7 @@ function BatchSection({ batch, member, contributions, payoutRounds }: BatchView)
                         </span>
                         <span className="inline-flex items-center gap-2">
                             <Wallet className="h-4 w-4 text-[#635BFF]" strokeWidth={2} />
-                            {batch.contributionAmount} / {batch.schedule.toLowerCase()}
+                            <Amount value={batch.contributionAmount} subClassName="text-[#0A2540]/50" /> / {batch.schedule.toLowerCase()}
                         </span>
                     </div>
                 </div>
@@ -178,7 +179,7 @@ function BatchSection({ batch, member, contributions, payoutRounds }: BatchView)
                                 Target payout
                             </span>
                             <span className="text-sm font-semibold text-[#0A2540]">
-                                {batch.targetPayout}
+                                <Amount value={batch.targetPayout} />
                             </span>
                         </div>
                         <div className="flex items-center justify-between">
@@ -195,7 +196,7 @@ function BatchSection({ batch, member, contributions, payoutRounds }: BatchView)
                                 Remaining due
                             </span>
                             <span className="text-sm font-semibold text-[#0A2540]">
-                                {member.remaining}
+                                <Amount value={member.remaining} />
                             </span>
                         </div>
                     </div>
@@ -247,7 +248,7 @@ function BatchSection({ batch, member, contributions, payoutRounds }: BatchView)
                                                 {c.round}
                                             </td>
                                             <td className="py-3 pr-4 text-[#0A2540]">
-                                                {c.amount}
+                                                <Amount value={c.amount} subClassName="text-[#0A2540]/50" />
                                             </td>
                                             <td className="py-3 font-mono text-xs text-[#0A2540]/60">
                                                 {c.txid}
@@ -287,7 +288,7 @@ function BatchSection({ batch, member, contributions, payoutRounds }: BatchView)
                                                 Round {p.round}
                                             </p>
                                             <p className="text-xs text-[#0A2540]/60">
-                                                {batch.targetPayout} pot
+                                                <Amount value={batch.targetPayout} subClassName="text-[#0A2540]/40" /> pot
                                             </p>
                                         </div>
                                     </div>

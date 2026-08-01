@@ -2,6 +2,7 @@
 
 namespace App\Http\Middleware;
 
+use App\Services\FiatConversionService;
 use Illuminate\Http\Request;
 use Inertia\Middleware;
 
@@ -42,6 +43,11 @@ class HandleInertiaRequests extends Middleware
                 'user' => $request->user(),
             ],
             'sidebarOpen' => ! $request->hasCookie('sidebar_state') || $request->cookie('sidebar_state') === 'true',
+            'currency' => [
+                'rate' => app(FiatConversionService::class)->rate(),
+                'code' => 'PHP',
+                'symbol' => '₱',
+            ],
         ];
     }
 }

@@ -13,6 +13,11 @@ declare module '@inertiajs/core' {
             name: string;
             auth: Auth;
             sidebarOpen: boolean;
+            currency: {
+                rate: number;
+                code: string;
+                symbol: string;
+            };
             [key: string]: unknown;
         };
     }

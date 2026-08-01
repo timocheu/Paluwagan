@@ -1,6 +1,7 @@
 import { Head, Link } from '@inertiajs/react';
-import { Banknote, ChevronDown, Info, MoreHorizontal, Users } from 'lucide-react';
+import { Banknote, ChevronDown, Info, Users } from 'lucide-react';
 import type { ReactNode } from 'react';
+import { Amount } from '@/components/amount';
 import { Badge } from '@/components/ui/badge';
 import { CreateBatchDialog } from '@/components/ui/batches/create-batch';
 import { Button } from '@/components/ui/button';
@@ -115,7 +116,7 @@ function TotalValueCard({ batches, totalValueLocked }: { batches: Batch[]; total
                         <Info className="h-3.5 w-3.5" />
                     </div>
                     <p className="text-3xl font-semibold tracking-tight text-[#0A2540]">
-                        {total}
+                        <Amount value={total} />
                     </p>
                     <p className="mt-1 text-sm text-muted-foreground">
                         Across {batches.length} batches, {activeCount} active
@@ -158,7 +159,9 @@ function BatchCard({ batch }: { batch: Batch }) {
                 </CardHeader>
 
                 <CardContent className="space-y-4 p-5 pt-4">
-                    <p className="text-xl font-semibold tracking-tight text-[#0A2540]">{batch.pot}</p>
+                    <p className="text-xl font-semibold tracking-tight text-[#0A2540]">
+                        <Amount value={batch.pot} />
+                    </p>
 
                     <div className="space-y-2">
                         <Progress value={batch.contributionProgress} className="h-1.5" />
