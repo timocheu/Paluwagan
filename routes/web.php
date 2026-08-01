@@ -4,7 +4,7 @@ use App\Http\Controllers\BatchController;
 use App\Http\Controllers\MemberController;
 use Illuminate\Support\Facades\Route;
 
-Route::get('/', [BatchController::class, 'index'])->name('home');
+Route::inertia('/', 'home/home')->name('home');
 
 Route::post('/batches', [BatchController::class, 'store'])->name('batches.store');
 Route::get('/batches', [BatchController::class, 'index'])->name('batches.index');
@@ -18,4 +18,4 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::inertia('dashboard', 'dashboard')->name('dashboard');
 });
 
-require __DIR__.'/settings.php';
+require __DIR__ . '/settings.php';
