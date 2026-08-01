@@ -117,7 +117,7 @@ class BatchController extends Controller
 
             return redirect()
                 ->route('batches.show', $batch)
-                ->with('success', 'Round '.$batch->rounds_current.' paid out to '.$result['contractAddress']);
+                ->with('success', 'Round '.$batch->rounds_current.' paid out to '.$result['recipientName'].' ('.$result['payoutAddress'].')');
         } catch (Throwable $e) {
             return back()->withErrors(['round' => $e->getMessage()]);
         }
@@ -133,7 +133,7 @@ class BatchController extends Controller
 
             return redirect()
                 ->route('batches.show', $batch)
-                ->with('success', 'Round expired, pot reclaimed by organizer ('.$result['txid'].')');
+                ->with('success', 'Round expired — pot reclaimed by the organizer ('.$result['payoutAddress'].')');
         } catch (Throwable $e) {
             return back()->withErrors(['round' => $e->getMessage()]);
         }

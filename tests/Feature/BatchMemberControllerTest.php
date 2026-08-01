@@ -57,10 +57,10 @@ it('shows a batch with its members and balances', function () {
         ->where('members.0.percent', 50));
 });
 
-it('serves real batches on the home page', function () {
+it('lists real batches on the batches page', function () {
     $batch = Batch::factory()->active()->create(['name' => 'Circle Alpha']);
 
-    $response = $this->get(route('home'));
+    $response = $this->get(route('batches.index'));
 
     $response->assertOk()->assertInertia(fn ($page) => $page
         ->component('manager/batch')

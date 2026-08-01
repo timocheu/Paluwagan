@@ -26,7 +26,7 @@ class RoundService
      * Advance the batch one round: every member contributes and the round
      * recipient claims the pot on-chain.
      *
-     * @return array{contractAddress: string, txid: string, payoutAddress: string, pot: string, phase: string}
+     * @return array{contractAddress: string, txid: string, payoutAddress: string, pot: string, phase: string, recipientName: string}
      */
     public function advance(Batch $batch): array
     {
@@ -39,6 +39,7 @@ class RoundService
 
         $args = $this->workerArgs($batch, $recipient->position, 'claim');
         $result = $this->runWorker($args);
+        $result['recipientName'] = $recipient->member->name ?? 'Member '.$recipient->position;
 
         foreach ($batch->batchMembers as $batchMember) {
             BatchContribution::updateOrCreate(

@@ -25,6 +25,15 @@ class BatchSeeder extends Seeder
             ['name' => 'Circle Delta', 'status' => 'Completed', 'contribution_sats' => 100_000_000, 'rounds_total' => 4, 'rounds_current' => 4],
         ];
 
+        $wallets = [
+            1 => 'bchtest:zp8alw3h8vuus3quxppmjcut877ceczpa59jxmd8ww',
+            2 => 'bchtest:zrhgzfvws5f3a6mnqsl0cjyuw3vlrm4waqec7dcg27',
+            3 => 'bchtest:zry3g9deul8vp4fyqzuq3x7hngpf5zf2xczcxts2pa',
+            4 => 'bchtest:zqgw9f442zf2mtsn2lscmr2jeerz0tfkkgsq9mdqy9',
+            5 => 'bchtest:zresm506jrgfhpcmwa8un7h2drt4yqzasctaq4ex07',
+            6 => 'bchtest:zpx3892s45fq6mnmaseukd99va04shvypsv0qjqp0z',
+        ];
+
         foreach ($batches as $batchData) {
             $batch = Batch::create($batchData);
 
@@ -33,7 +42,7 @@ class BatchSeeder extends Seeder
             for ($position = 1; $position <= $batchData['rounds_total']; $position++) {
                 $member = Member::create([
                     'name' => 'Member '.$position,
-                    'wallet' => 'bchtest:'.fake()->unique()->regexify('[a-z0-9]{42}'),
+                    'wallet' => $wallets[$position],
                 ]);
 
                 $batchMember = BatchMember::create([

@@ -50,10 +50,17 @@ export const members = {
 /** The trusted coordinator who deploys each round and handles timeouts. */
 export const organizer = derive(4);
 
+const namedMembers: readonly [Party, Party, Party, Party] = [members.alice, members.bob, members.carol, members.dave];
+
 /**
- * Derive the key for a circle member by 1-based position, so circles larger
- * than four members get their own deterministic keys.
+ * Derive the key for a circle member by 1-based position. Positions 1-4 map
+ * to the named demo members (alice, bob, carol, dave); larger circles get
+ * their own deterministic keys.
  */
 export function member(position: number): Party {
+    if (position >= 1 && position <= namedMembers.length) {
+        return namedMembers[position - 1];
+    }
+
     return derive(position + 4);
 }
