@@ -9,7 +9,6 @@ import {
     Plus,
 } from 'lucide-react';
 import type { ReactNode } from 'react';
-import { useState } from 'react';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { CreateMemberDialog } from '@/components/ui/batches/create-member';
@@ -22,9 +21,9 @@ import {
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Progress } from '@/components/ui/progress';
-import { Separator } from '@/components/ui/separator';
-import { Switch } from '@/components/ui/switch';
 import AppLayout from '@/layouts/app-layout';
+import { useState } from 'react';
+import { Check, Copy } from 'lucide-react';
 import { advance, expire } from '@/routes/batches';
 
 type MemberStatus = 'Released' | 'Active' | 'Slashed';
@@ -103,6 +102,40 @@ const defaultMembers: Member[] = [
     },
 ];
 
+function WalletAddress({ address }: { address: string }) {
+    const [copied, setCopied] = useState(false);
+
+    const handleCopy = async () => {
+        await navigator.clipboard.writeText(address);
+
+        setCopied(true);
+
+        setTimeout(() => {
+            setCopied(false);
+        }, 1000);
+    };
+
+    return (
+        <button
+            type="button"
+            onClick={handleCopy}
+            className="mt-1 flex items-center gap-1 font-mono text-[11px] text-muted-foreground transition-colors hover:text-foreground"
+        >
+            {address.slice(0, 6)}...
+            {address.slice(-4)}
+
+            {copied ? (
+                <>
+                    <Check className="h-3 w-3 text-green-600" />
+                    <span className="text-green-600">Copied!</span>
+                </>
+            ) : (
+                <Copy className="h-3 w-3" />
+            )}
+        </button>
+    );
+}
+
 function TopBar({
     batchName,
     batchId,
@@ -149,7 +182,7 @@ function TopBar({
     );
 }
 
-function TotalBalanceCard() {
+function TotalBalanceCard({ total }: { total: number }) {
     return (
         <Card className="rounded-2xl border-neutral-200 shadow-none">
             <CardContent className="flex items-center justify-between p-6">
@@ -158,10 +191,12 @@ function TotalBalanceCard() {
                         Total pot balance
                         <Info className="h-3.5 w-3.5" />
                     </div>
+
                     <p className="text-3xl font-semibold tracking-tight">
-                        2.0 BCH
+                        {total.toFixed(2)} BCH
                     </p>
                 </div>
+
                 <div className="flex h-11 w-11 items-center justify-center rounded-full bg-emerald-50">
                     <Banknote
                         className="h-5 w-5 text-emerald-600"
@@ -253,8 +288,8 @@ function MemberCard({ member }: { member: Member }) {
         member.status === 'Released'
             ? 'text-emerald-700 bg-emerald-50'
             : member.status === 'Slashed'
-              ? 'text-red-700 bg-red-50'
-              : 'text-neutral-600 bg-neutral-100';
+                ? 'text-red-700 bg-red-50'
+                : 'text-neutral-600 bg-neutral-100';
 
     return (
         <Card className="rounded-2xl border-neutral-200 shadow-none">
@@ -269,9 +304,7 @@ function MemberCard({ member }: { member: Member }) {
                         <p className="text-sm leading-none font-medium">
                             {member.name}
                         </p>
-                        <p className="mt-1 font-mono text-[11px] text-muted-foreground">
-                            {member.address}
-                        </p>
+                        <WalletAddress address={member.address} />
                     </div>
                 </div>
                 <Button variant="ghost" size="icon" className="-mr-1.5 h-7 w-7">
@@ -329,6 +362,12 @@ export default function MembersDashboard({
     potContract?: string | null;
     flash?: { success?: string | null; error?: string | null };
 }) {
+
+    const totalPotBalance = members.reduce((total, member) => {
+        const amount = parseFloat(member.saved.replace(' BCH', '')) || 0;
+        return total + amount;
+    }, 0);
+
     return (
         <>
             <Head title={batchName} />
@@ -336,7 +375,7 @@ export default function MembersDashboard({
             <TopBar batchName={batchName} batchId={batchId} />
 
             <div className="space-y-5 px-8 pb-12">
-                <TotalBalanceCard />
+                <TotalBalanceCard total={totalPotBalance} />
 
                 <RoundControls
                     batchId={batchId}
