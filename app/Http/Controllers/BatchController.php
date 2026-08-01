@@ -168,6 +168,7 @@ class BatchController extends Controller
             'batchId' => (string) $batch->id,
             'batchName' => $batch->name,
             'members' => $members,
+            'transactions' => $this->transactionsPayload($batch),
             'rotation' => $batch->rotation,
             'rounds' => [
                 'current' => $batch->rounds_current,
@@ -181,6 +182,52 @@ class BatchController extends Controller
                 'error' => session('errors')['round'] ?? null,
             ],
         ]);
+    }
+
+    /**
+     * Rebuild the wallet ledger from on-chain data: each member's contribution
+     * (member → batch wallet) and the round payouts (batch wallet → recipient).
+     *
+     * @return array<int, array{txid: string, from: string, to: string, amount: string, round: int, type: string}>
+     */
+    private function transactionsPayload(Batch $batch): array
+    {
+        $transactions = [];
+
+        foreach ($batch->batchMembers->sortBy('position') as $bm) {
+            foreach ($bm->contributions as $contribution) {
+                $transactions[] = [
+                    'txid' => $contribution->tx_id ?? '-',
+                    'from' => $bm->member->name ?? 'Member '.$bm->position,
+                    'to' => 'Batch Wallet',
+                    'amount' => $this->bch($contribution->amount_sats),
+                    'round' => $contribution->round,
+                    'type' => 'contribution',
+                ];
+            }
+        }
+
+        $pot = $this->bch($batch->contribution_sats * $batch->batchMembers->count());
+
+        foreach ($batch->batchMembers as $bm) {
+            if ($bm->payout_tx === null) {
+                continue;
+            }
+
+            $transactions[] = [
+                'txid' => $bm->payout_tx,
+                'from' => 'Batch Wallet',
+                'to' => $bm->member->name ?? 'Member '.$bm->position,
+                'amount' => $pot,
+                'round' => $bm->payout_order ?? $bm->position,
+                'type' => 'payout',
+            ];
+        }
+
+        return collect($transactions)
+            ->sortBy([['round', 'desc'], ['type', 'desc']])
+            ->values()
+            ->all();
     }
 
     /**

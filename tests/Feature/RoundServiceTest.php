@@ -64,6 +64,7 @@ it('advances a round and records contributions on-chain', function () {
     $released = BatchMember::where('batch_id', $batch->id)->where('status', 'Released')->get();
     expect($released)->toHaveCount(1);
     expect($released[0]->position)->toBe(1);
+    expect($released[0]->payout_tx)->toBe($result['txid']);
 });
 
 it('advances round by round and completes the batch at the end', function () {

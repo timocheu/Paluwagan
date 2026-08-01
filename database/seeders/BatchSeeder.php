@@ -58,6 +58,13 @@ class BatchSeeder extends Seeder
                         'batch_member_id' => $batchMember->id,
                         'round' => $round,
                         'amount_sats' => $batchData['contribution_sats'],
+                        'tx_id' => substr(hash('sha256', "batch{$batch->id}-member{$position}-round{$round}"), 0, 64),
+                    ]);
+                }
+
+                if ($position <= $roundsCurrent) {
+                    $batchMember->update([
+                        'payout_tx' => substr(hash('sha256', "batch{$batch->id}-payout{$position}"), 0, 64),
                     ]);
                 }
             }

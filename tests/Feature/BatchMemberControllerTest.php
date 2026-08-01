@@ -39,8 +39,18 @@ it('shows a batch with its members and balances', function () {
     ]);
 
     $member = Member::factory()->create(['name' => 'Alice']);
-    $bm = BatchMember::factory()->create(['batch_id' => $batch->id, 'member_id' => $member->id, 'position' => 1]);
-    BatchContribution::factory()->create(['batch_member_id' => $bm->id, 'round' => 1, 'amount_sats' => 50_000_000]);
+    $bm = BatchMember::factory()->create([
+        'batch_id' => $batch->id,
+        'member_id' => $member->id,
+        'position' => 1,
+        'payout_tx' => str_repeat('a', 64),
+    ]);
+    BatchContribution::factory()->create([
+        'batch_member_id' => $bm->id,
+        'round' => 1,
+        'amount_sats' => 50_000_000,
+        'tx_id' => str_repeat('b', 64),
+    ]);
 
     $response = $this->get(route('batches.show', $batch));
 
@@ -55,7 +65,17 @@ it('shows a batch with its members and balances', function () {
         ->where('members.0.due', 'Round 2')
         ->where('members.0.remaining', '0.5 BCH')
         ->where('members.0.progress', 50)
-        ->where('members.0.percent', 50));
+        ->where('members.0.percent', 50)
+        ->has('transactions', 2)
+        ->where('transactions.0.type', 'payout')
+        ->where('transactions.0.from', 'Batch Wallet')
+        ->where('transactions.0.to', 'Alice')
+        ->where('transactions.0.amount', '0.5 BCH')
+        ->where('transactions.0.round', 1)
+        ->where('transactions.1.type', 'contribution')
+        ->where('transactions.1.from', 'Alice')
+        ->where('transactions.1.to', 'Batch Wallet')
+        ->where('transactions.1.amount', '0.5 BCH'));
 });
 
 it('lists real batches on the batches page', function () {

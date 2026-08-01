@@ -17,11 +17,12 @@ use Illuminate\Support\Carbon;
  * @property int $position
  * @property int|null $payout_order
  * @property string $status
+ * @property string|null $payout_tx
  * @property bool $auto_pay
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
  */
-#[Fillable(['batch_id', 'member_id', 'position', 'payout_order', 'status', 'auto_pay'])]
+#[Fillable(['batch_id', 'member_id', 'position', 'payout_order', 'status', 'payout_tx', 'auto_pay'])]
 class BatchMember extends Model
 {
     /** @use HasFactory<BatchMemberFactory> */

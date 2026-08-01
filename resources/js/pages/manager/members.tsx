@@ -2,17 +2,15 @@ import { Head, Link, router, usePage } from '@inertiajs/react';
 import {
     ArrowLeft,
     Banknote,
+    Check,
     ChevronDown,
-    Clock3,
+    Copy,
     Info,
     MoreHorizontal,
-    Plus,
 } from 'lucide-react';
-import { Check, Copy } from 'lucide-react';
 import type { ReactNode } from 'react';
 import { useState } from 'react';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
-import { Badge } from '@/components/ui/badge';
 import { CreateMemberDialog } from '@/components/ui/batches/create-member';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
@@ -131,6 +129,39 @@ function WalletAddress({ address }: { address: string }) {
                 </>
             ) : (
                 <Copy className="h-3 w-3" />
+            )}
+        </button>
+    );
+}
+
+function Txid({ txid }: { txid: string }) {
+    const [copied, setCopied] = useState(false);
+
+    const handleCopy = async () => {
+        await navigator.clipboard.writeText(txid);
+
+        setCopied(true);
+
+        setTimeout(() => {
+            setCopied(false);
+        }, 1000);
+    };
+
+    return (
+        <button
+            type="button"
+            onClick={handleCopy}
+            title={txid}
+            aria-label="Copy transaction id"
+            className="inline-flex items-center gap-1 whitespace-nowrap font-mono text-xs text-muted-foreground transition-colors hover:text-foreground"
+        >
+            {txid.slice(0, 8)}...
+            {txid.slice(-8)}
+
+            {copied ? (
+                <Check className="h-3 w-3 shrink-0 text-green-600" />
+            ) : (
+                <Copy className="h-3 w-3 shrink-0 text-muted-foreground" />
             )}
         </button>
     );
@@ -293,13 +324,6 @@ function RoundControls({
 }
 
 function MemberCard({ member }: { member: Member }) {
-    const statusColor =
-        member.status === 'Released'
-            ? 'text-emerald-700 bg-emerald-50'
-            : member.status === 'Slashed'
-                ? 'text-red-700 bg-red-50'
-                : 'text-neutral-600 bg-neutral-100';
-
     return (
         <Card className="rounded-2xl border-neutral-200 shadow-none">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 p-5 pb-0">
@@ -354,53 +378,23 @@ function MemberCard({ member }: { member: Member }) {
     );
 }
 
+type TransactionType = 'contribution' | 'payout';
+
 interface Transaction {
-    id: string;
     txid: string;
+    from: string;
+    to: string;
     amount: string;
-    time: string;
-    paidTo: string;
+    round: number;
+    type: TransactionType;
 }
 
-const dummyTransactions: Transaction[] = [
-    {
-        id: '1',
-        txid: 'b7c3f2a9...e41d',
-        amount: '0.5 BCH',
-        time: '2024-01-15 10:30 AM',
-        paidTo: 'Member 2',
-    },
-    {
-        id: '2',
-        txid: '9d21e8c4...ab77',
-        amount: '0.5 BCH',
-        time: '2024-01-16 02:15 PM',
-        paidTo: 'Member 3',
-    },
-    {
-        id: '3',
-        txid: 'f04d1b6e...88c2',
-        amount: '0.5 BCH',
-        time: '2024-01-17 09:45 AM',
-        paidTo: 'Member 4',
-    },
-    {
-        id: '4',
-        txid: 'c81a7f3d...b0e9',
-        amount: '0.5 BCH',
-        time: '2024-01-18 04:20 PM',
-        paidTo: 'Member 1',
-    },
-    {
-        id: '5',
-        txid: 'e5b9d042...f3a6',
-        amount: '0.5 BCH',
-        time: '2024-01-19 11:00 AM',
-        paidTo: 'Member 2',
-    },
-];
+function TransactionLog({ transactions }: { transactions: Transaction[] }) {
+    const rowClass = (type: TransactionType) =>
+        type === 'payout'
+            ? 'bg-emerald-50/60 transition-colors hover:bg-emerald-100/80'
+            : 'bg-red-50/60 transition-colors hover:bg-red-100/80';
 
-function TransactionLog() {
     return (
         <Card className="rounded-2xl border-neutral-200 shadow-none">
             <CardHeader className="p-5 pb-3">
@@ -415,37 +409,39 @@ function TransactionLog() {
                         <thead className="sticky top-0 bg-neutral-50 text-left text-xs uppercase tracking-wide text-muted-foreground">
                             <tr>
                                 <th className="px-4 py-3 font-medium">Txid</th>
+                                <th className="px-4 py-3 font-medium">From</th>
                                 <th className="px-4 py-3 font-medium">Amount</th>
-                                <th className="px-4 py-3 font-medium">Time</th>
-                                <th className="px-4 py-3 font-medium">Paid to</th>
+                                <th className="px-4 py-3 font-medium">Round</th>
+                                <th className="px-4 py-3 font-medium">To</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-neutral-100">
-                            {dummyTransactions.length === 0 ? (
+                            {transactions.length === 0 ? (
                                 <tr>
                                     <td
-                                        colSpan={4}
+                                        colSpan={5}
                                         className="px-4 py-8 text-center text-muted-foreground"
                                     >
                                         No transactions found
                                     </td>
                                 </tr>
                             ) : (
-                                dummyTransactions.map((tx) => (
+                                transactions.map((tx) => (
                                     <tr
-                                        key={tx.id}
-                                        className="transition-colors hover:bg-neutral-50"
+                                        key={`${tx.round}-${tx.type}-${tx.txid}`}
+                                        className={rowClass(tx.type)}
                                     >
-                                        <td className="px-4 py-3 font-mono text-xs">
-                                            {tx.txid}
+                                        <td className="px-4 py-3 whitespace-nowrap">
+                                            <Txid txid={tx.txid} />
                                         </td>
+                                        <td className="px-4 py-3">{tx.from}</td>
                                         <td className="px-4 py-3 font-medium text-[#0A2540]">
                                             {tx.amount}
                                         </td>
                                         <td className="px-4 py-3 whitespace-nowrap text-muted-foreground">
-                                            {tx.time}
+                                            Round {tx.round}
                                         </td>
-                                        <td className="px-4 py-3">{tx.paidTo}</td>
+                                        <td className="px-4 py-3">{tx.to}</td>
                                     </tr>
                                 ))
                             )}
@@ -465,6 +461,7 @@ export default function MembersDashboard({
     batchStatus = 'Forming',
     potContract = null,
     potWallet = null,
+    transactions = [],
     flash,
 }: {
     batchId?: string;
@@ -474,6 +471,7 @@ export default function MembersDashboard({
     batchStatus?: string;
     potContract?: string | null;
     potWallet?: string | null;
+    transactions?: Transaction[];
     flash?: { success?: string | null; error?: string | null };
 }) {
 
@@ -493,7 +491,7 @@ export default function MembersDashboard({
                 <TotalBalanceCard total={totalPotBalance} />
 
                 <div className="mt-5">
-                    <TransactionLog />
+                    <TransactionLog transactions={transactions} />
                 </div>
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
                     <div className="lg:col-span-3">

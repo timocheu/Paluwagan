@@ -53,7 +53,7 @@ class RoundService
             );
         }
 
-        $recipient->update(['status' => 'Released']);
+        $recipient->update(['status' => 'Released', 'payout_tx' => $result['txid']]);
         $batch->update([
             'rounds_current' => $round,
             'status' => $round >= $batch->rounds_total ? 'Completed' : 'Active',
