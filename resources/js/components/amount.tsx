@@ -15,7 +15,7 @@ export function Amount({ value, className, subClassName }: AmountProps) {
         <span className={cn('inline-flex flex-col', className)}>
             <span>{value}</span>
             {rate > 0 ? (
-                <span className={cn('text-xs font-normal text-muted-foreground', subClassName)}>
+                <span className={cn('text-lg font-large text-muted-foreground tracking-wide', subClassName)}>
                     ≈ {pesoFromBchString(value, rate)}
                 </span>
             ) : null}
