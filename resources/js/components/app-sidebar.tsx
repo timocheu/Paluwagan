@@ -24,11 +24,6 @@ const mainNavItems: NavItem[] = [
         icon: LayoutDashboard,
     },
     {
-        title: 'Rounds',
-        href: '#',
-        icon: Repeat,
-    },
-    {
         title: 'Batch',
         href: home(),
         icon: Users,
@@ -43,11 +38,7 @@ const mainNavItems: NavItem[] = [
         href: '#',
         icon: Banknote,
     },
-    {
-        title: 'Reports',
-        href: '#',
-        icon: BarChart3,
-    },
+
 ];
 
 const footerNavItems: NavItem[] = [
