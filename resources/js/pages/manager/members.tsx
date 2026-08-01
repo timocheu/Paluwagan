@@ -1,4 +1,4 @@
-import { Head, Link, router } from '@inertiajs/react';
+import { Head, Link, router, usePage } from '@inertiajs/react';
 import {
     ArrowLeft,
     Banknote,
@@ -24,7 +24,7 @@ import { Progress } from '@/components/ui/progress';
 import AppLayout from '@/layouts/app-layout';
 import { useState } from 'react';
 import { Check, Copy, Send, ArrowDownLeft } from 'lucide-react';
-import { advance, expire } from '@/routes/batches';
+import { advance, expire, index, show } from '@/routes/batches';
 
 type MemberStatus = 'Released' | 'Active' | 'Slashed';
 
@@ -146,14 +146,16 @@ function TopBar({
     return (
         <div className="px-8 pt-8 pb-6">
             <Link
-                href="/"
+                href={index()}
                 className="mb-2 flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground"
             >
                 <ArrowLeft className="h-3.5 w-3.5" />
                 Batches
             </Link>
             <div className="flex items-center justify-between">
-                <h2 className="text-lg font-medium">{batchName}</h2>
+                <h2 className="text-xl font-semibold tracking-tight text-[#0A2540]">
+                    {batchName}
+                </h2>
                 <div className="flex items-center gap-3">
                     <DropdownMenu>
                         <DropdownMenuTrigger asChild>
@@ -161,7 +163,7 @@ function TopBar({
                                 variant="outline"
                                 className="gap-2 font-normal"
                             >
-                                <span className="h-5 w-6 rounded bg-emerald-600" />
+                                <span className="h-5 w-6 rounded bg-[#635BFF]" />
                                 •••• 6799
                                 <ChevronDown className="h-3.5 w-3.5 text-muted-foreground" />
                             </Button>
@@ -192,14 +194,14 @@ function TotalBalanceCard({ total }: { total: number }) {
                         <Info className="h-3.5 w-3.5" />
                     </div>
 
-                    <p className="text-3xl font-semibold tracking-tight">
+                    <p className="text-3xl font-semibold tracking-tight text-[#0A2540]">
                         {total.toFixed(2)} BCH
                     </p>
                 </div>
 
-                <div className="flex h-11 w-11 items-center justify-center rounded-full bg-emerald-50">
+                <div className="flex h-11 w-11 items-center justify-center rounded-full bg-[#635BFF]/10">
                     <Banknote
-                        className="h-5 w-5 text-emerald-600"
+                        className="h-5 w-5 text-[#635BFF]"
                         strokeWidth={1.75}
                     />
                 </div>
@@ -296,12 +298,12 @@ function MemberCard({ member }: { member: Member }) {
             <CardHeader className="flex flex-row items-center justify-between space-y-0 p-5 pb-0">
                 <div className="flex items-center gap-2.5">
                     <Avatar className="h-8 w-8">
-                        <AvatarFallback className="bg-neutral-100 font-mono text-[11px] text-neutral-600">
+                        <AvatarFallback className="bg-[#635BFF]/10 font-mono text-[11px] text-[#635BFF]">
                             {member.id}
                         </AvatarFallback>
                     </Avatar>
                     <div>
-                        <p className="text-sm leading-none font-medium">
+                        <p className="text-sm leading-none font-medium text-[#0A2540]">
                             {member.name}
                         </p>
                         <WalletAddress address={member.address} />
@@ -313,7 +315,7 @@ function MemberCard({ member }: { member: Member }) {
             </CardHeader>
 
             <CardContent className="space-y-4 p-5 pt-4">
-                <p className="text-xl font-semibold tracking-tight">
+                <p className="text-xl font-semibold tracking-tight text-[#0A2540]">
                     {member.contribution}
                 </p>
 
@@ -432,8 +434,8 @@ function TransactionLog({ memberWallet }: { memberWallet: string }) {
                                 <div
                                     className={`flex h-8 w-8 items-center justify-center rounded-full ${
                                         tx.type === 'sent'
-                                            ? 'bg-emerald-100 text-emerald-600'
-                                            : 'bg-blue-100 text-blue-600'
+                                            ? 'bg-[#635BFF]/10 text-[#635BFF]'
+                                            : 'bg-[#00D4FF]/10 text-[#00A3C4]'
                                     }`}
                                 >
                                     {tx.type === 'sent' ? (
@@ -444,14 +446,14 @@ function TransactionLog({ memberWallet }: { memberWallet: string }) {
                                 </div>
                                 <div className="flex-1 min-w-0">
                                     <div className="flex items-center justify-between gap-2">
-                                        <p className="text-sm font-medium truncate">
+                                        <p className="text-sm font-medium truncate text-[#0A2540]">
                                             {tx.name || 'Member'}
                                         </p>
                                         <span
                                             className={`text-xs px-2 py-0.5 rounded-full ${
                                                 tx.type === 'sent'
-                                                    ? 'bg-emerald-100 text-emerald-700'
-                                                    : 'bg-blue-100 text-blue-700'
+                                                    ? 'bg-[#635BFF]/10 text-[#635BFF]'
+                                                    : 'bg-[#00D4FF]/10 text-[#00A3C4]'
                                             }`}
                                         >
                                             {tx.type === 'sent' ? 'Sent' : 'Received'}
@@ -538,4 +540,28 @@ export default function MembersDashboard({
     );
 }
 
-MembersDashboard.layout = (page: ReactNode) => <AppLayout>{page}</AppLayout>;
+function MembersLayout({ children }: { children: ReactNode }) {
+    const { batchName, batchId } = usePage().props as {
+        batchName?: string;
+        batchId?: number;
+    };
+
+    return (
+        <AppLayout
+            breadcrumbs={[
+                {
+                    title: 'Batches',
+                    href: index(),
+                },
+                {
+                    title: batchName ?? 'Batch',
+                    href: show(batchId!),
+                },
+            ]}
+        >
+            {children}
+        </AppLayout>
+    );
+}
+
+MembersDashboard.layout = (page: ReactNode) => <MembersLayout>{page}</MembersLayout>;
