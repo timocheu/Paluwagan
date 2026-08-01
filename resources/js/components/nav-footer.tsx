@@ -8,6 +8,7 @@ import {
 } from '@/components/ui/sidebar';
 import { toUrl } from '@/lib/utils';
 import type { NavItem } from '@/types';
+import { ThemeToggle } from '@/components/theme-toggle';
 
 export function NavFooter({
     items,
@@ -43,6 +44,14 @@ export function NavFooter({
                         </SidebarMenuItem>
                     ))}
                 </SidebarMenu>
+
+                {/* Theme Toggle */}
+                <div className="mt-4 flex items-center justify-between px-2">
+                    <span className="text-sm text-muted-foreground">
+                        Theme
+                    </span>
+                    <ThemeToggle />
+                </div>
             </SidebarGroupContent>
         </SidebarGroup>
     );
