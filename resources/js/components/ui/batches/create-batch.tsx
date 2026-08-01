@@ -1,5 +1,5 @@
 import { useForm } from '@inertiajs/react';
-import { Plus, Trash2 } from 'lucide-react';
+import { Check, FileText, Plus, Trash2 } from 'lucide-react';
 import { FormEventHandler } from 'react';
 import { Button } from '@/components/ui/button';
 import { store } from '@/routes/batches';
@@ -103,6 +103,26 @@ export function CreateBatchDialog() {
                                 required
                             />
                             {errors.name && <p className="text-sm text-red-600">{errors.name}</p>}
+                        </div>
+
+                        <div className="space-y-1.5">
+                            <Label>Contract agreement</Label>
+                            <p className="text-xs text-muted-foreground">
+                                Demo contract prepared with an attorney for the
+                                Paluwagan savings pool.
+                            </p>
+                            <div className="flex items-center gap-3 rounded-lg border border-dashed border-neutral-300 bg-neutral-50 px-3 py-2.5">
+                                <FileText className="h-5 w-5 shrink-0 text-red-500" />
+                                <div className="min-w-0 flex-1">
+                                    <p className="truncate text-sm font-medium text-[#0A2540]">
+                                        Paluwagan_Contract.pdf
+                                    </p>
+                                    <p className="text-xs text-muted-foreground">
+                                        Signed agreement · 128 KB
+                                    </p>
+                                </div>
+                                <Check className="h-4 w-4 shrink-0 text-green-600" />
+                            </div>
                         </div>
 
                         <div className="grid grid-cols-2 gap-3">
