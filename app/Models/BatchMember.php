@@ -15,12 +15,13 @@ use Illuminate\Support\Carbon;
  * @property int $batch_id
  * @property int $member_id
  * @property int $position
+ * @property int|null $payout_order
  * @property string $status
  * @property bool $auto_pay
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
  */
-#[Fillable(['batch_id', 'member_id', 'position', 'status', 'auto_pay'])]
+#[Fillable(['batch_id', 'member_id', 'position', 'payout_order', 'status', 'auto_pay'])]
 class BatchMember extends Model
 {
     /** @use HasFactory<BatchMemberFactory> */
@@ -36,16 +37,25 @@ class BatchMember extends Model
         'auto_pay' => false,
     ];
 
+    /**
+     * @return BelongsTo<Batch, $this>
+     */
     public function batch(): BelongsTo
     {
         return $this->belongsTo(Batch::class);
     }
 
+    /**
+     * @return BelongsTo<Member, $this>
+     */
     public function member(): BelongsTo
     {
         return $this->belongsTo(Member::class);
     }
 
+    /**
+     * @return HasMany<BatchContribution, $this>
+     */
     public function contributions(): HasMany
     {
         return $this->hasMany(BatchContribution::class);

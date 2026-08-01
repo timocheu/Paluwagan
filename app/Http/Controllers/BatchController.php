@@ -5,10 +5,12 @@ namespace App\Http\Controllers;
 use App\Models\Batch;
 use App\Models\BatchMember;
 use App\Models\Member;
+use App\Services\RoundService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
+use Throwable;
 
 class BatchController extends Controller
 {
@@ -37,6 +39,7 @@ class BatchController extends Controller
                     ? (int) round($batch->rounds_current / $batch->rounds_total * 100)
                     : 0,
                 'status' => $batch->status,
+                'potContract' => $batch->contract_address,
             ]),
         ]);
     }
@@ -78,7 +81,62 @@ class BatchController extends Controller
             ]);
         }
 
+        $this->assignPayoutOrder($batch);
+
         return redirect()->route('batches.show', $batch);
+    }
+
+    /**
+     * Assign the payout order. Fixed rotation pays by membership position;
+     * random rotation shuffles positions once per cycle so every member gets
+     * exactly one pot.
+     */
+    private function assignPayoutOrder(Batch $batch): void
+    {
+        $orders = $batch->rotation === 'random'
+            ? range(1, $batch->batchMembers->count())
+            : null;
+
+        if ($orders !== null) {
+            shuffle($orders);
+        }
+
+        foreach ($batch->batchMembers()->orderBy('position')->get() as $index => $batchMember) {
+            $batchMember->update(['payout_order' => $orders[$index] ?? $batchMember->position]);
+        }
+    }
+
+    /**
+     * Simulate the next round: every member contributes and the recipient
+     * claims the pot on-chain.
+     */
+    public function advance(Batch $batch): RedirectResponse
+    {
+        try {
+            $result = app(RoundService::class)->advance($batch);
+
+            return redirect()
+                ->route('batches.show', $batch)
+                ->with('success', 'Round '.$batch->rounds_current.' paid out to '.$result['contractAddress']);
+        } catch (Throwable $e) {
+            return back()->withErrors(['round' => $e->getMessage()]);
+        }
+    }
+
+    /**
+     * Simulate an expired round: the organizer reclaims the unclaimed pot.
+     */
+    public function expire(Batch $batch): RedirectResponse
+    {
+        try {
+            $result = app(RoundService::class)->expire($batch);
+
+            return redirect()
+                ->route('batches.show', $batch)
+                ->with('success', 'Round expired, pot reclaimed by organizer ('.$result['txid'].')');
+        } catch (Throwable $e) {
+            return back()->withErrors(['round' => $e->getMessage()]);
+        }
     }
 
     /**
@@ -97,9 +155,36 @@ class BatchController extends Controller
             'batchId' => (string) $batch->id,
             'batchName' => $batch->name,
             'members' => $members,
+            'rotation' => $batch->rotation,
+            'rounds' => [
+                'current' => $batch->rounds_current,
+                'total' => $batch->rounds_total,
+            ],
+            'batchStatus' => $batch->status,
+            'potContract' => $batch->contract_address,
+            'flash' => [
+                'success' => session('success'),
+                'error' => session('errors')['round'] ?? null,
+            ],
         ]);
     }
 
+    /**
+     * @return array{
+     *     id: string,
+     *     name: string,
+     *     address: string,
+     *     contribution: string,
+     *     saved: string,
+     *     progress: int,
+     *     percent: int,
+     *     due: string,
+     *     remaining: string,
+     *     autoPay: bool,
+     *     nextDate: string|null,
+     *     status: string,
+     * }
+     */
     private function memberPayload(Batch $batch, BatchMember $bm): array
     {
         $totalDue = $batch->rounds_current * $batch->contribution_sats;

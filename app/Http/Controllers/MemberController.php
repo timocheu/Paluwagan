@@ -21,7 +21,7 @@ class MemberController extends Controller
             'auto_pay' => ['boolean'],
         ]);
 
-        $batch = Batch::findOrFail($data['batch_id']);
+        $batch = Batch::findOrFail((int) $data['batch_id']);
 
         $member = Member::create([
             'name' => $data['name'] ?: null,

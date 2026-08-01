@@ -22,6 +22,9 @@ class Member extends Model
     /** @use HasFactory<MemberFactory> */
     use HasFactory;
 
+    /**
+     * @return HasMany<BatchMember, $this>
+     */
     public function batchMembers(): HasMany
     {
         return $this->hasMany(BatchMember::class);

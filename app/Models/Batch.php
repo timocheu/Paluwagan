@@ -20,10 +20,12 @@ use Illuminate\Support\Carbon;
  * @property int $contribution_sats
  * @property int $rounds_total
  * @property int $rounds_current
+ * @property string|null $contract_address
+ * @property string|null $last_payout_tx
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
  */
-#[Fillable(['name', 'status', 'schedule', 'rotation', 'contribution_sats', 'rounds_total', 'rounds_current'])]
+#[Fillable(['name', 'status', 'schedule', 'rotation', 'contribution_sats', 'rounds_total', 'rounds_current', 'contract_address', 'last_payout_tx'])]
 class Batch extends Model
 {
     /** @use HasFactory<BatchFactory> */
@@ -42,17 +44,26 @@ class Batch extends Model
         'rounds_current' => 0,
     ];
 
+    /**
+     * @return HasMany<BatchMember, $this>
+     */
     public function batchMembers(): HasMany
     {
         return $this->hasMany(BatchMember::class);
     }
 
+    /**
+     * @return BelongsToMany<Member, $this>
+     */
     public function members(): BelongsToMany
     {
         return $this->belongsToMany(Member::class, 'batch_members')
             ->withPivot('position', 'status', 'auto_pay');
     }
 
+    /**
+     * @return HasManyThrough<BatchContribution, BatchMember, $this>
+     */
     public function contributions(): HasManyThrough
     {
         return $this->hasManyThrough(BatchContribution::class, BatchMember::class);

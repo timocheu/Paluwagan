@@ -24,6 +24,9 @@ class BatchContribution extends Model
     /** @use HasFactory<BatchContributionFactory> */
     use HasFactory;
 
+    /**
+     * @return BelongsTo<BatchMember, $this>
+     */
     public function batchMember(): BelongsTo
     {
         return $this->belongsTo(BatchMember::class);

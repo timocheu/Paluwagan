@@ -1,4 +1,4 @@
-import { Head, Link } from '@inertiajs/react';
+import { Head, Link, router } from '@inertiajs/react';
 import {
     ArrowLeft,
     Banknote,
@@ -9,6 +9,7 @@ import {
     Plus,
 } from 'lucide-react';
 import type { ReactNode } from 'react';
+import { useState } from 'react';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { CreateMemberDialog } from '@/components/ui/batches/create-member';
@@ -24,6 +25,7 @@ import { Progress } from '@/components/ui/progress';
 import { Separator } from '@/components/ui/separator';
 import { Switch } from '@/components/ui/switch';
 import AppLayout from '@/layouts/app-layout';
+import { advance, expire } from '@/routes/batches';
 
 type MemberStatus = 'Released' | 'Active' | 'Slashed';
 
@@ -171,6 +173,81 @@ function TotalBalanceCard() {
     );
 }
 
+function RoundControls({
+    batchId,
+    rounds,
+    batchStatus,
+    potContract,
+    flash,
+}: {
+    batchId: string;
+    rounds: { current: number; total: number };
+    batchStatus: string;
+    potContract: string | null;
+    flash?: { success?: string | null; error?: string | null };
+}) {
+    const completed = batchStatus === 'Completed';
+    const [running, setRunning] = useState<'advance' | 'expire' | null>(null);
+
+    const run = (action: 'advance' | 'expire') => {
+        setRunning(action);
+        router.post(
+            action === 'advance'
+                ? advance.url({ batch: Number(batchId) })
+                : expire.url({ batch: Number(batchId) }),
+            {},
+            { preserveScroll: true, onFinish: () => setRunning(null) },
+        );
+    };
+
+    return (
+        <Card className="rounded-2xl border-neutral-200 shadow-none">
+            <CardContent className="flex flex-wrap items-center justify-between gap-4 p-5">
+                <div className="space-y-1">
+                    <p className="text-sm font-medium">
+                        Round {rounds.current} of {rounds.total}
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                        {completed
+                            ? 'All rounds paid out.'
+                            : `Rotation: ${batchStatus} · next recipient picked on-chain`}
+                    </p>
+                    {potContract && (
+                        <p className="font-mono text-[11px] text-muted-foreground">
+                            Pot contract: {potContract}
+                        </p>
+                    )}
+                </div>
+
+                <div className="flex items-center gap-2">
+                    {!completed && (
+                        <Button
+                            variant="outline"
+                            disabled={running !== null}
+                            onClick={() => run('expire')}
+                        >
+                            {running === 'expire' ? 'Reclaiming...' : 'Expire round'}
+                        </Button>
+                    )}
+                    <Button
+                        disabled={completed || running !== null}
+                        onClick={() => run('advance')}
+                    >
+                        {running === 'advance' ? 'Paying out...' : 'Simulate next round'}
+                    </Button>
+                </div>
+
+                {flash?.error && (
+                    <p className="w-full text-sm text-red-600">{flash.error}</p>
+                )}
+                {flash?.success && (
+                    <p className="w-full text-sm text-emerald-600">{flash.success}</p>
+                )}
+            </CardContent>
+        </Card>
+    );
+}
+
 function MemberCard({ member }: { member: Member }) {
     const statusColor =
         member.status === 'Released'
@@ -239,10 +316,18 @@ export default function MembersDashboard({
     batchId = '',
     batchName = 'Circle Alpha',
     members = defaultMembers,
+    rounds = { current: 0, total: 0 },
+    batchStatus = 'Forming',
+    potContract = null,
+    flash,
 }: {
     batchId?: string;
     batchName?: string;
     members?: Member[];
+    rounds?: { current: number; total: number };
+    batchStatus?: string;
+    potContract?: string | null;
+    flash?: { success?: string | null; error?: string | null };
 }) {
     return (
         <>
@@ -252,6 +337,14 @@ export default function MembersDashboard({
 
             <div className="space-y-5 px-8 pb-12">
                 <TotalBalanceCard />
+
+                <RoundControls
+                    batchId={batchId}
+                    rounds={rounds}
+                    batchStatus={batchStatus}
+                    potContract={potContract}
+                    flash={flash}
+                />
 
                 <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
                     {members.map((m) => (

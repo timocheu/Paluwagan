@@ -39,7 +39,7 @@ function derive(index: number): Party {
     return { priv, pub, pkh, address: encoded.address };
 }
 
-/** Deterministic circle members. */
+/** Deterministic circle members (positions 1-4). */
 export const members = {
     alice: derive(0),
     bob: derive(1),
@@ -49,3 +49,11 @@ export const members = {
 
 /** The trusted coordinator who deploys each round and handles timeouts. */
 export const organizer = derive(4);
+
+/**
+ * Derive the key for a circle member by 1-based position, so circles larger
+ * than four members get their own deterministic keys.
+ */
+export function member(position: number): Party {
+    return derive(position + 4);
+}
