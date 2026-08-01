@@ -5,6 +5,7 @@ import {
     Check,
     ChevronDown,
     Copy,
+    FileText,
     Info,
     MoreHorizontal,
 } from 'lucide-react';
@@ -25,6 +26,32 @@ import AppLayout from '@/layouts/app-layout';
 import { advance, expire, index, show } from '@/routes/batches';
 
 type MemberStatus = 'Released' | 'Active' | 'Slashed';
+
+interface BatchInfo {
+    contributionModel: string;
+    contributionAmount: string;
+    targetPayout: string;
+    schedule: string;
+    rotation: string;
+    memberCount: number;
+    cyclesTotal: number;
+    cyclesCurrent: number;
+    nextContributionDate: string | null;
+    contractStatus: string;
+}
+
+const defaultBatchInfo: BatchInfo = {
+    contributionModel: 'Fixed Contribution',
+    contributionAmount: '0.5 BCH',
+    targetPayout: '2 BCH',
+    schedule: 'Monthly',
+    rotation: 'Fixed Order',
+    memberCount: 4,
+    cyclesTotal: 4,
+    cyclesCurrent: 2,
+    nextContributionDate: 'Round 3',
+    contractStatus: 'Active',
+};
 
 interface Member {
     id: string;
@@ -323,6 +350,51 @@ function RoundControls({
     );
 }
 
+function BatchInformation({ info }: { info: BatchInfo }) {
+    const rows: Array<{ label: string; value: string | number }> = [
+        { label: 'Contribution Model', value: info.contributionModel },
+        { label: 'Contribution Amount', value: info.contributionAmount },
+        { label: 'Target Payout', value: info.targetPayout },
+        { label: 'Contribution Schedule', value: info.schedule },
+        { label: 'Payout Order', value: info.rotation },
+        { label: 'Members', value: info.memberCount },
+        { label: 'Total Cycles', value: info.cyclesTotal },
+        { label: 'Current Cycle', value: info.cyclesCurrent },
+        { label: 'Next Contribution Date', value: info.nextContributionDate ?? '—' },
+        { label: 'Smart Contract Status', value: info.contractStatus },
+    ];
+
+    return (
+        <Card className="rounded-2xl border-neutral-200 shadow-none">
+            <CardHeader className="flex flex-row items-start justify-between p-5 pb-3">
+                <div>
+                    <h3 className="text-lg font-semibold">Batch Information</h3>
+                    <p className="mt-1 text-sm text-muted-foreground">
+                        Configuration and on-chain status for this batch
+                    </p>
+                </div>
+                <Button type="button" variant="outline" className="gap-2" onClick={() => {}}>
+                    <FileText className="h-4 w-4 text-muted-foreground" />
+                    View Contract PDF
+                </Button>
+            </CardHeader>
+            <CardContent className="p-5 pt-0">
+                <dl className="grid grid-cols-1 gap-x-8 gap-y-3 sm:grid-cols-2 lg:grid-cols-3">
+                    {rows.map((row) => (
+                        <div
+                            key={row.label}
+                            className="flex items-baseline justify-between gap-4 border-b border-neutral-100 pb-2"
+                        >
+                            <dt className="text-sm text-muted-foreground">{row.label}</dt>
+                            <dd className="text-sm font-medium text-[#0A2540]">{row.value}</dd>
+                        </div>
+                    ))}
+                </dl>
+            </CardContent>
+        </Card>
+    );
+}
+
 function MemberCard({ member }: { member: Member }) {
     return (
         <Card className="rounded-2xl border-neutral-200 shadow-none">
@@ -461,6 +533,7 @@ export default function MembersDashboard({
     batchStatus = 'Forming',
     potContract = null,
     potWallet = null,
+    batchInfo = defaultBatchInfo,
     transactions = [],
     flash,
 }: {
@@ -471,6 +544,7 @@ export default function MembersDashboard({
     batchStatus?: string;
     potContract?: string | null;
     potWallet?: string | null;
+    batchInfo?: BatchInfo;
     transactions?: Transaction[];
     flash?: { success?: string | null; error?: string | null };
 }) {
@@ -489,6 +563,10 @@ export default function MembersDashboard({
 
             <div className="space-y-5 px-8 pb-12">
                 <TotalBalanceCard total={totalPotBalance} />
+
+                <div className="mt-5">
+                    <BatchInformation info={batchInfo} />
+                </div>
 
                 <div className="mt-5">
                     <TransactionLog transactions={transactions} />

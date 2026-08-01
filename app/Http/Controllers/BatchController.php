@@ -177,11 +177,55 @@ class BatchController extends Controller
             'batchStatus' => $batch->status,
             'potContract' => $batch->contract_address,
             'potWallet' => $batch->pot_address,
+            'batchInfo' => $this->batchInfoPayload($batch),
             'flash' => [
                 'success' => session('success'),
                 'error' => session('errors') ? session('errors')->first('round') : null,
             ],
         ]);
+    }
+
+    /**
+     * @return array{
+     *     contributionModel: string,
+     *     contributionAmount: string,
+     *     targetPayout: string,
+     *     schedule: string,
+     *     rotation: string,
+     *     memberCount: int,
+     *     cyclesTotal: int,
+     *     cyclesCurrent: int,
+     *     nextContributionDate: string|null,
+     *     contractStatus: string,
+     * }
+     */
+    private function batchInfoPayload(Batch $batch): array
+    {
+        $memberCount = $batch->batchMembers->count();
+
+        return [
+            'contributionModel' => 'Fixed Contribution',
+            'contributionAmount' => $this->bch($batch->contribution_sats),
+            'targetPayout' => $this->bch($batch->contribution_sats * $memberCount),
+            'schedule' => ucfirst($batch->schedule),
+            'rotation' => $batch->rotation === 'random' ? 'Random Draw' : 'Fixed Order',
+            'memberCount' => $memberCount,
+            'cyclesTotal' => $batch->rounds_total,
+            'cyclesCurrent' => $batch->rounds_current,
+            'nextContributionDate' => $batch->status === 'Completed'
+                ? null
+                : $this->nextContributionDate($batch),
+            'contractStatus' => $batch->contract_address !== null ? 'Deployed' : 'Pending',
+        ];
+    }
+
+    private function nextContributionDate(Batch $batch): string
+    {
+        return match ($batch->schedule) {
+            'daily' => now()->addDay()->toDateString(),
+            'weekly' => now()->addWeek()->toDateString(),
+            default => now()->addMonth()->toDateString(),
+        };
     }
 
     /**

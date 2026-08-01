@@ -36,6 +36,8 @@ it('shows a batch with its members and balances', function () {
         'rounds_total' => 4,
         'rounds_current' => 2,
         'contribution_sats' => 50_000_000,
+        'schedule' => 'daily',
+        'rotation' => 'fixed',
     ]);
 
     $member = Member::factory()->create(['name' => 'Alice']);
@@ -75,7 +77,17 @@ it('shows a batch with its members and balances', function () {
         ->where('transactions.1.type', 'contribution')
         ->where('transactions.1.from', 'Alice')
         ->where('transactions.1.to', 'Batch Wallet')
-        ->where('transactions.1.amount', '0.5 BCH'));
+        ->where('transactions.1.amount', '0.5 BCH')
+        ->where('batchInfo.contributionModel', 'Fixed Contribution')
+        ->where('batchInfo.contributionAmount', '0.5 BCH')
+        ->where('batchInfo.targetPayout', '0.5 BCH')
+        ->where('batchInfo.schedule', 'Daily')
+        ->where('batchInfo.rotation', 'Fixed Order')
+        ->where('batchInfo.memberCount', 1)
+        ->where('batchInfo.cyclesTotal', 4)
+        ->where('batchInfo.cyclesCurrent', 2)
+        ->where('batchInfo.nextContributionDate', now()->addDay()->toDateString())
+        ->where('batchInfo.contractStatus', 'Pending'));
 });
 
 it('lists real batches on the batches page', function () {
