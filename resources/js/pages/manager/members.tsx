@@ -195,24 +195,6 @@ function MemberCard({ member }: { member: Member }) {
                     <span>{member.remaining}</span>
                 </div>
 
-                <Separator />
-
-                <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                        <Switch checked={member.autoPay} />
-                        <span className="text-sm text-muted-foreground">Auto-pay</span>
-                    </div>
-                    {member.nextDate ? (
-                        <span className="flex items-center gap-1 text-xs text-muted-foreground">
-                            <Clock3 className="h-3.5 w-3.5" />
-                            {member.nextDate}
-                        </span>
-                    ) : (
-                        <Badge variant="secondary" className={`text-[11px] font-normal ${statusColor}`}>
-                            {member.status}
-                        </Badge>
-                    )}
-                </div>
             </CardContent>
         </Card>
     );

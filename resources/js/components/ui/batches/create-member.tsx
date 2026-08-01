@@ -86,24 +86,7 @@ export function CreateMemberDialog() {
                             )}
                         </div>
 
-                        <div className="flex items-center justify-between rounded-lg border p-4">
-                            <div className="space-y-0.5">
-                                <Label htmlFor="auto-pay">
-                                    Auto-pay
-                                </Label>
-                                <p className="text-sm text-muted-foreground">
-                                    Automatically process scheduled payments.
-                                </p>
-                            </div>
 
-                            <Switch
-                                id="auto-pay"
-                                checked={data.auto_pay}
-                                onCheckedChange={(checked) =>
-                                    setData('auto_pay', checked)
-                                }
-                            />
-                        </div>
                     </div>
 
                     <DialogFooter>
