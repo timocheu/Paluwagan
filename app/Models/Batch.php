@@ -22,11 +22,12 @@ use Illuminate\Support\Carbon;
  * @property int $rounds_current
  * @property string|null $contract_address
  * @property string|null $pot_address
+ * @property string|null $created_by_wallet
  * @property string|null $last_payout_tx
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
  */
-#[Fillable(['name', 'status', 'schedule', 'rotation', 'contribution_sats', 'rounds_total', 'rounds_current', 'contract_address', 'pot_address', 'last_payout_tx'])]
+#[Fillable(['name', 'status', 'schedule', 'rotation', 'contribution_sats', 'rounds_total', 'rounds_current', 'contract_address', 'pot_address', 'created_by_wallet', 'last_payout_tx'])]
 class Batch extends Model
 {
     /** @use HasFactory<BatchFactory> */

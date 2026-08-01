@@ -1,5 +1,5 @@
 import { Link, usePage } from '@inertiajs/react';
-import { Banknote, BookOpen, Users, Wallet } from 'lucide-react';
+import { Banknote, BookOpen, Home, Users, Wallet } from 'lucide-react';
 import AppLogo from '@/components/app-logo';
 import { NavFooter } from '@/components/nav-footer';
 import { NavMain } from '@/components/nav-main';
@@ -14,10 +14,15 @@ import {
     SidebarMenuItem,
 } from '@/components/ui/sidebar';
 import { index } from '@/routes/batches';
-import { batch } from '@/routes/member';
+import { batch, created } from '@/routes/member';
 import type { NavItem } from '@/types';
 
 const managerNavItems: NavItem[] = [
+    {
+        title: 'Home',
+        href: '/',
+        icon: Home,
+    },
     {
         title: 'Batches',
         href: index(),
@@ -40,6 +45,11 @@ const memberNavItems: NavItem[] = [
         title: 'My Savings Circles',
         href: batch(),
         icon: Users,
+    },
+    {
+        title: 'Batch',
+        href: created(),
+        icon: Wallet,
     },
 ];
 

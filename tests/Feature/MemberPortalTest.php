@@ -133,7 +133,36 @@ it('redirects a member-created batch back to their savings circles', function ()
     $batch = Batch::where('name', 'My Circle')->firstOrFail();
     $member = Member::where('wallet', $wallet)->firstOrFail();
 
+    expect($batch->created_by_wallet)->toBe($wallet);
     expect($batch->batchMembers()->where('member_id', $member->id)->exists())->toBeTrue();
+});
+
+it('redirects to registration when no wallet is bound on the created page', function () {
+    $this->get(route('member.created'))
+        ->assertRedirect(route('member.index'));
+});
+
+it('lists only batches the session wallet created', function () {
+    $wallet = 'bchtest:member1';
+    $created = Batch::factory()->active()->create([
+        'name' => 'Created Circle',
+        'created_by_wallet' => $wallet,
+    ]);
+    Batch::factory()->active()->create([
+        'name' => 'Someone Else Circle',
+        'created_by_wallet' => 'bchtest:member2',
+    ]);
+
+    $this->withSession(['member_wallet' => $wallet])
+        ->get(route('member.created'))
+        ->assertOk()
+        ->assertInertia(fn ($page) => $page
+            ->component('member/created')
+            ->where('wallet', $wallet)
+            ->has('batches', 1)
+            ->where('batches.0.id', (string) $created->id)
+            ->where('batches.0.name', 'Created Circle')
+            ->where('batches.0.status', 'Active'));
 });
 
 it('keeps the manager redirect when no member session exists', function () {

@@ -73,6 +73,7 @@ class BatchController extends Controller
             'rotation' => $data['rotation'],
             'contribution_sats' => $contributionSats,
             'rounds_total' => count($data['members']),
+            'created_by_wallet' => session('member_wallet'),
         ]);
 
         foreach (array_values($data['members']) as $index => $memberData) {

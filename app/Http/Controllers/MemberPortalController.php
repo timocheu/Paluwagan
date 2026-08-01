@@ -75,6 +75,30 @@ class MemberPortalController extends Controller
     }
 
     /**
+     * Show every batch the registered wallet created.
+     */
+    public function created(): RedirectResponse|Response
+    {
+        $wallet = session('member_wallet');
+
+        if ($wallet === null) {
+            return redirect()->route('member.index');
+        }
+
+        $batches = Batch::with('batchMembers')
+            ->where('created_by_wallet', $wallet)
+            ->orderByDesc('created_at')
+            ->get()
+            ->map(fn (Batch $batch) => $this->batchInfoPayload($batch))
+            ->values();
+
+        return Inertia::render('member/created', [
+            'wallet' => $wallet,
+            'batches' => $batches,
+        ]);
+    }
+
+    /**
      * Drop the session wallet.
      */
     public function forget(): RedirectResponse
@@ -88,6 +112,7 @@ class MemberPortalController extends Controller
      * @return array{
      *     id: string,
      *     name: string,
+     *     status: string,
      *     contributionModel: string,
      *     contributionAmount: string,
      *     targetPayout: string,
@@ -108,6 +133,7 @@ class MemberPortalController extends Controller
         return [
             'id' => (string) $batch->id,
             'name' => $batch->name,
+            'status' => $batch->status,
             'contributionModel' => 'Fixed Contribution',
             'contributionAmount' => $this->bch($batch->contribution_sats),
             'targetPayout' => $this->bch($batch->contribution_sats * $memberCount),

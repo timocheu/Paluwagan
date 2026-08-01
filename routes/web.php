@@ -10,6 +10,7 @@ Route::inertia('/', 'home/home')->name('home');
 Route::get('/member', [MemberPortalController::class, 'index'])->name('member.index');
 Route::post('/member/register', [MemberPortalController::class, 'register'])->name('member.register');
 Route::get('/member/batches', [MemberPortalController::class, 'batch'])->name('member.batch');
+Route::get('/member/batches/created', [MemberPortalController::class, 'created'])->name('member.created');
 Route::post('/member/forget', [MemberPortalController::class, 'forget'])->name('member.forget');
 
 Route::post('/batches', [BatchController::class, 'store'])->name('batches.store');
