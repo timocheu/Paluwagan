@@ -42,17 +42,24 @@ it('advances a round and records contributions on-chain', function () {
 
     expect($result['txid'])->toBeString()->toMatch('/^[a-f0-9]{64}$/');
     expect($result['contractAddress'])->toStartWith('bchtest:');
+    expect($result['potAddress'])->toStartWith('bchtest:');
+    expect($result['fundingTxid'])->toMatch('/^[a-f0-9]{64}$/');
+    expect($result['contributions'])->toHaveCount(3);
 
     $batch = $batch->fresh();
 
     expect($batch->rounds_current)->toBe(1);
     expect($batch->status)->toBe('Active');
     expect($batch->contract_address)->toBe($result['contractAddress']);
+    expect($batch->pot_address)->toBe($result['potAddress']);
     expect($batch->last_payout_tx)->toBe($result['txid']);
 
     expect(BatchContribution::where('round', 1)->count())->toBe(3);
     expect(BatchContribution::where('round', 1)->pluck('amount_sats')->all())
         ->toBe([10_000_000, 10_000_000, 10_000_000]);
+
+    $txIds = BatchContribution::where('round', 1)->pluck('tx_id')->all();
+    expect(collect($txIds)->unique())->toHaveCount(3);
 
     $released = BatchMember::where('batch_id', $batch->id)->where('status', 'Released')->get();
     expect($released)->toHaveCount(1);
@@ -95,6 +102,7 @@ it('evaluates an expired round so the organizer reclaims the pot', function () {
     $batch = $batch->fresh();
 
     expect($batch->last_payout_tx)->toBe($result['txid']);
+    expect($batch->pot_address)->toBe($result['potAddress']);
     expect($batch->rounds_current)->toBe(0);
 });
 

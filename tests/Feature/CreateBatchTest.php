@@ -25,6 +25,7 @@ it('creates a batch with members and their rotation positions', function () {
     expect($batch->rotation)->toBe('fixed');
     expect($batch->rounds_total)->toBe(3);
     expect($batch->status)->toBe('Forming');
+    expect($batch->pot_address)->toStartWith('bchtest:');
 
     $pivots = $batch->batchMembers()->orderBy('position')->get();
 

@@ -8,6 +8,7 @@ use App\Models\Member;
 use App\Services\RoundService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 use Inertia\Inertia;
 use Inertia\Response;
 use Throwable;
@@ -40,6 +41,7 @@ class BatchController extends Controller
                     : 0,
                 'status' => $batch->status,
                 'potContract' => $batch->contract_address,
+                'potWallet' => $batch->pot_address,
             ]),
         ]);
     }
@@ -82,6 +84,13 @@ class BatchController extends Controller
         }
 
         $this->assignPayoutOrder($batch);
+
+        try {
+            $potAddress = app(RoundService::class)->batchPotAddress($batch);
+            $batch->update(['pot_address' => $potAddress]);
+        } catch (Throwable $e) {
+            Log::warning('Could not derive batch pot wallet.', ['batchId' => $batch->id, 'message' => $e->getMessage()]);
+        }
 
         return redirect()->route('batches.show', $batch);
     }
@@ -162,6 +171,7 @@ class BatchController extends Controller
             ],
             'batchStatus' => $batch->status,
             'potContract' => $batch->contract_address,
+            'potWallet' => $batch->pot_address,
             'flash' => [
                 'success' => session('success'),
                 'error' => session('errors')['round'] ?? null,

@@ -8,7 +8,9 @@ import {
     MoreHorizontal,
     Plus,
 } from 'lucide-react';
+import { Check, Copy } from 'lucide-react';
 import type { ReactNode } from 'react';
+import { useState } from 'react';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { CreateMemberDialog } from '@/components/ui/batches/create-member';
@@ -22,8 +24,6 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Progress } from '@/components/ui/progress';
 import AppLayout from '@/layouts/app-layout';
-import { useState } from 'react';
-import { Check, Copy } from 'lucide-react';
 import { advance, expire, index, show } from '@/routes/batches';
 
 type MemberStatus = 'Released' | 'Active' | 'Slashed';
@@ -215,12 +215,14 @@ function RoundControls({
     rounds,
     batchStatus,
     potContract,
+    potWallet,
     flash,
 }: {
     batchId: string;
     rounds: { current: number; total: number };
     batchStatus: string;
     potContract: string | null;
+    potWallet: string | null;
     flash?: { success?: string | null; error?: string | null };
 }) {
     const completed = batchStatus === 'Completed';
@@ -249,6 +251,11 @@ function RoundControls({
                             ? 'All rounds paid out.'
                             : `Rotation: ${batchStatus} · next recipient picked on-chain`}
                     </p>
+                    {potWallet && (
+                        <p className="font-mono text-[11px] text-muted-foreground">
+                            Pot wallet: {potWallet}
+                        </p>
+                    )}
                     {potContract && (
                         <p className="font-mono text-[11px] text-muted-foreground">
                             Pot contract: {potContract}
@@ -457,6 +464,7 @@ export default function MembersDashboard({
     rounds = { current: 0, total: 0 },
     batchStatus = 'Forming',
     potContract = null,
+    potWallet = null,
     flash,
 }: {
     batchId?: string;
@@ -465,11 +473,13 @@ export default function MembersDashboard({
     rounds?: { current: number; total: number };
     batchStatus?: string;
     potContract?: string | null;
+    potWallet?: string | null;
     flash?: { success?: string | null; error?: string | null };
 }) {
 
     const totalPotBalance = members.reduce((total, member) => {
         const amount = parseFloat(member.saved.replace(' BCH', '')) || 0;
+
         return total + amount;
     }, 0);
 
@@ -485,7 +495,7 @@ export default function MembersDashboard({
                 <div className="mt-5">
                     <TransactionLog />
                 </div>
-                <div className="grid grid-cols-1 lg:grid-cols-4 gap-5">
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
                     <div className="lg:col-span-3">
                         <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
                             {members.map((m) => (
@@ -494,16 +504,17 @@ export default function MembersDashboard({
                         </div>
 
                     </div>
-                    <div className="lg:col-span-1">
-                        <div className="sticky top-24 space-y-5">
-                            <RoundControls
-                                batchId={batchId}
-                                rounds={rounds}
-                                batchStatus={batchStatus}
-                                potContract={potContract}
-                                flash={flash}
-                            />
-                        </div>
+                </div>
+                <div className="lg:col-span-1">
+                    <div className="sticky top-24 space-y-5">
+                        <RoundControls
+                            batchId={batchId}
+                            rounds={rounds}
+                            batchStatus={batchStatus}
+                            potContract={potContract}
+                            potWallet={potWallet}
+                            flash={flash}
+                        />
                     </div>
                 </div>
             </div>

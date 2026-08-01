@@ -23,10 +23,10 @@ class RoundService
     ];
 
     /**
-     * Advance the batch one round: every member contributes and the round
-     * recipient claims the pot on-chain.
+     * Advance the batch one round: every member contributes to the batch pot
+     * wallet and the round recipient claims the pot on-chain.
      *
-     * @return array{contractAddress: string, txid: string, payoutAddress: string, pot: string, phase: string, recipientName: string}
+     * @return array{contractAddress: string, txid: string, payoutAddress: string, pot: string, phase: string, potAddress: string, fundingTxid: string, contributions: array<int, array{position: int, amount: string, txid: string}>, recipientName: string}
      */
     public function advance(Batch $batch): array
     {
@@ -37,16 +37,18 @@ class RoundService
         $round = $batch->rounds_current + 1;
         $recipient = $this->recipientForRound($batch, $round);
 
-        $args = $this->workerArgs($batch, $recipient->position, 'claim');
+        $args = $this->workerArgs($batch, $recipient->position, 'advance');
         $result = $this->runWorker($args);
         $result['recipientName'] = $recipient->member->name ?? 'Member '.$recipient->position;
+
+        $transactions = collect($result['contributions'])->keyBy('position');
 
         foreach ($batch->batchMembers as $batchMember) {
             BatchContribution::updateOrCreate(
                 ['batch_member_id' => $batchMember->id, 'round' => $round],
                 [
                     'amount_sats' => $batch->contribution_sats,
-                    'tx_id' => $result['txid'],
+                    'tx_id' => $transactions[$batchMember->position]['txid'] ?? $result['txid'],
                 ],
             );
         }
@@ -56,6 +58,7 @@ class RoundService
             'rounds_current' => $round,
             'status' => $round >= $batch->rounds_total ? 'Completed' : 'Active',
             'contract_address' => $result['contractAddress'],
+            'pot_address' => $batch->pot_address ?? $result['potAddress'],
             'last_payout_tx' => $result['txid'],
         ]);
 
@@ -65,7 +68,7 @@ class RoundService
     /**
      * Evaluate an expired round so the organizer reclaims the unclaimed pot.
      *
-     * @return array{contractAddress: string, txid: string, payoutAddress: string, pot: string, phase: string}
+     * @return array{contractAddress: string, txid: string, payoutAddress: string, pot: string, phase: string, potAddress: string, fundingTxid: string, contributions: array<int, array{position: int, amount: string, txid: string}>}
      */
     public function expire(Batch $batch): array
     {
@@ -81,10 +84,43 @@ class RoundService
 
         $batch->update([
             'contract_address' => $result['contractAddress'],
+            'pot_address' => $batch->pot_address ?? $result['potAddress'],
             'last_payout_tx' => $result['txid'],
         ]);
 
         return $result;
+    }
+
+    /**
+     * Derive the deterministic pot wallet address for a batch. The address is
+     * a function of the batch id, so it can always be recomputed server-side.
+     */
+    public function batchPotAddress(Batch $batch): string
+    {
+        $command = sprintf(
+            'node %s --batch-wallet %d',
+            escapeshellarg(base_path('contracts/src/worker.ts')),
+            $batch->id,
+        );
+
+        $process = Process::run($command);
+
+        if ($process->failed()) {
+            $message = trim($process->errorOutput()) ?: trim($process->output());
+
+            Log::error('Batch pot wallet derivation failed.', ['batchId' => $batch->id, 'message' => $message]);
+
+            throw new RuntimeException("Pot wallet derivation failed: {$message}");
+        }
+
+        try {
+            /** @var array{address: string} $data */
+            $data = json_decode($process->output(), true, 512, JSON_THROW_ON_ERROR);
+        } catch (Throwable $e) {
+            throw new RuntimeException('Could not parse worker output.', 0, $e);
+        }
+
+        return $data['address'];
     }
 
     /**
@@ -121,6 +157,7 @@ class RoundService
         $deadline = $startBlock + (self::BLOCKS_PER_INTERVAL[$batch->schedule] ?? 4320);
 
         return [
+            'batchId' => $batch->id,
             'recipientPosition' => $recipientPosition,
             'contributionSats' => (string) $batch->contribution_sats,
             'memberCount' => (string) $batch->batchMembers->count(),
@@ -134,7 +171,7 @@ class RoundService
      * Run the CashScript worker to evaluate the round on-chain and return its JSON result.
      *
      * @param  array<string, mixed>  $args
-     * @return array{contractAddress: string, txid: string, payoutAddress: string, pot: string, phase: string}
+     * @return array{contractAddress: string, txid: string, payoutAddress: string, pot: string, phase: string, potAddress: string, fundingTxid: string, contributions: array<int, array{position: int, amount: string, txid: string}>}
      */
     private function runWorker(array $args): array
     {
@@ -155,7 +192,7 @@ class RoundService
         }
 
         try {
-            /** @var array{contractAddress: string, txid: string, payoutAddress: string, pot: string, phase: string} $result */
+            /** @var array{contractAddress: string, txid: string, payoutAddress: string, pot: string, phase: string, potAddress: string, fundingTxid: string, contributions: array<int, array{position: int, amount: string, txid: string}>} $result */
             $result = json_decode($process->output(), true, 512, JSON_THROW_ON_ERROR);
         } catch (Throwable $e) {
             throw new RuntimeException('Could not parse worker output.', 0, $e);

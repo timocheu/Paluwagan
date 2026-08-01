@@ -1,4 +1,5 @@
 import {
+    decodePrivateKeyWif,
     deriveHdPrivateNodeFromSeed,
     deriveHdPath,
     deriveSeedFromBip39Mnemonic,
@@ -19,12 +20,16 @@ export interface Party {
 }
 
 function derive(index: number): Party {
+    return deriveAtPath(`m/44'/145'/0'/0/${index}`);
+}
+
+function deriveAtPath(path: string): Party {
     const seed = deriveSeedFromBip39Mnemonic('Smart Coop ROSCA');
     const rootNode = deriveHdPrivateNodeFromSeed(seed, { throwErrors: true });
-    const node = deriveHdPath(rootNode, `m/44'/145'/0'/0/${index}`);
+    const node = deriveHdPath(rootNode, path);
 
     if (typeof node === 'string') {
-        throw new Error(`Failed to derive key at index ${index}: ${node}`);
+        throw new Error(`Failed to derive key at ${path}: ${node}`);
     }
 
     const priv = node.privateKey as Uint8Array;
@@ -63,4 +68,31 @@ export function member(position: number): Party {
     }
 
     return derive(position + 4);
+}
+
+/**
+ * The per-batch collection wallet where members send their contributions.
+ * Derived deterministically from the batch id so the worker can re-derive it.
+ */
+export function batchWallet(batchId: number): Party {
+    return deriveAtPath(`m/44'/145'/0'/1/${batchId}`);
+}
+
+/** Build a Party from an imported WIF (e.g. a CashScript playground wallet). */
+export function fromWif(wif: string): Party {
+    const decoded = decodePrivateKeyWif(wif);
+
+    if (typeof decoded === 'string') {
+        throw new Error(`Invalid private key (WIF): ${decoded}`);
+    }
+
+    const pub = secp256k1.derivePublicKeyCompressed(decoded.privateKey) as Uint8Array;
+    const pkh = hash160(pub);
+    const encoded = encodeCashAddress({
+        payload: pkh,
+        prefix: 'bchtest',
+        type: 'p2pkhWithTokens',
+    });
+
+    return { priv: decoded.privateKey, pub, pkh, address: encoded.address };
 }

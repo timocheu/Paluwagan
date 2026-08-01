@@ -6,6 +6,7 @@ use App\Models\Batch;
 use App\Models\BatchContribution;
 use App\Models\BatchMember;
 use App\Models\Member;
+use App\Services\RoundService;
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 
@@ -59,6 +60,14 @@ class BatchSeeder extends Seeder
                         'amount_sats' => $batchData['contribution_sats'],
                     ]);
                 }
+            }
+
+            try {
+                $potAddress = app(RoundService::class)->batchPotAddress($batch);
+                $batch->update(['pot_address' => $potAddress]);
+            } catch (\Throwable $e) {
+                // Pot wallet is derived deterministically from the batch id; a
+                // failed derivation is backfilled on the first round advance.
             }
         }
     }
