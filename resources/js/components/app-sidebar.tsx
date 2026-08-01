@@ -104,7 +104,6 @@ export function AppSidebar() {
             </SidebarContent>
 
             <SidebarFooter>
-                <RoundStatusCard />
                 <NavFooter items={footerNavItems} className="mt-auto" />
                 <NavUser />
             </SidebarFooter>

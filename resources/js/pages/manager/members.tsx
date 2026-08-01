@@ -15,6 +15,7 @@ import { Separator } from '@/components/ui/separator';
 import { Switch } from '@/components/ui/switch';
 import AppLayout from '@/layouts/app-layout';
 import type { ReactNode } from 'react';
+import { CreateMemberDialog } from '@/components/ui/batches/create-member';
 
 type MemberStatus = 'Released' | 'Active' | 'Slashed';
 
@@ -118,10 +119,7 @@ function TopBar({ batchName }: { batchName: string }) {
                             <DropdownMenuItem>bchtest:qzfx9j...2vqk</DropdownMenuItem>
                         </DropdownMenuContent>
                     </DropdownMenu>
-                    <Button className="gap-2 bg-neutral-900 hover:bg-neutral-800">
-                        <Plus className="h-4 w-4" />
-                        New round
-                    </Button>
+                    <CreateMemberDialog />
                 </div>
             </div>
         </div>
