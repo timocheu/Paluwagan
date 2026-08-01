@@ -41,12 +41,6 @@ export function CreateMemberDialog({ batchId }: { batchId: string }) {
 
     return (
         <Dialog open={open} onOpenChange={setOpen}>
-            <DialogTrigger asChild>
-                <Button className="gap-2 bg-neutral-900 hover:bg-neutral-800 cursor-pointer">
-                    <Plus className="h-4 w-4" />
-                    Add member
-                </Button>
-            </DialogTrigger>
 
             <DialogContent className="sm:max-w-md">
                 <form onSubmit={submit}>

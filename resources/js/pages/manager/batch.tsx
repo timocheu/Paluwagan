@@ -99,8 +99,12 @@ function TopBar() {
     );
 }
 
-function TotalValueCard({ batches }: { batches: Batch[] }) {
+function TotalValueCard({ batches, totalValueLocked }: { batches: Batch[]; totalValueLocked?: string }) {
     const activeCount = batches.filter((b) => b.status === 'Active').length;
+    const total = totalValueLocked
+        ?? `${batches
+            .reduce((sum, b) => sum + (parseFloat(b.pot.replace(' BCH', '')) || 0), 0)
+            .toFixed(1)} BCH`;
 
     return (
         <Card className="rounded-2xl border-neutral-200 shadow-none">
@@ -111,7 +115,7 @@ function TotalValueCard({ batches }: { batches: Batch[] }) {
                         <Info className="h-3.5 w-3.5" />
                     </div>
                     <p className="text-3xl font-semibold tracking-tight text-[#0A2540]">
-                        9.6 BCH
+                        {total}
                     </p>
                     <p className="mt-1 text-sm text-muted-foreground">
                         Across {batches.length} batches, {activeCount} active
@@ -185,7 +189,7 @@ function BatchCard({ batch }: { batch: Batch }) {
     );
 }
 
-export default function Batches({ batches = defaultBatches }: { batches?: Batch[] }) {
+export default function Batches({ batches = defaultBatches, totalValueLocked }: { batches?: Batch[]; totalValueLocked?: string }) {
     return (
         <>
             <Head title="Batches" />
@@ -193,7 +197,7 @@ export default function Batches({ batches = defaultBatches }: { batches?: Batch[
             <TopBar />
 
             <div className="space-y-5 px-8 pb-12">
-                <TotalValueCard batches={batches} />
+                <TotalValueCard batches={batches} totalValueLocked={totalValueLocked} />
 
                 <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
                     {batches.map((b) => (

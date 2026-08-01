@@ -41,8 +41,12 @@ class BatchController extends Controller
                     : 0,
                 'status' => $batch->status,
                 'potContract' => $batch->contract_address,
-                'potWallet' => $batch->pot_address,
             ]),
+            'totalValueLocked' => $this->bch($batches->sum(
+                fn (Batch $batch) => $batch->batchMembers->sum(
+                    fn (BatchMember $bm) => $bm->contributions->sum('amount_sats')
+                )
+            )),
         ]);
     }
 

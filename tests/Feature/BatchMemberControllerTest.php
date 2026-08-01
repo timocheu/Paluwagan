@@ -27,7 +27,8 @@ it('lists batches with derived pot and progress', function () {
         ->where('batches.0.pot', '1 BCH')
         ->where('batches.0.round', ['current' => 2, 'total' => 4])
         ->where('batches.0.contributionProgress', 50)
-        ->where('batches.0.status', 'Active'));
+        ->where('batches.0.status', 'Active')
+        ->where('totalValueLocked', '1 BCH'));
 });
 
 it('shows a batch with its members and balances', function () {
