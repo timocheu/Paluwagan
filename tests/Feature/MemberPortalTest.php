@@ -10,7 +10,8 @@ it('shows the wallet registration screen', function () {
         ->assertOk()
         ->assertInertia(fn ($page) => $page
             ->component('member/index')
-            ->where('wallet', null));
+            ->where('wallet', null)
+            ->where('pendingDecisions', []));
 });
 
 it('binds a wallet to the session and redirects to the batch view', function () {
@@ -98,6 +99,10 @@ it('shows the batch from the member point of view', function () {
             ->where('batches.0.member.name', 'Alice')
             ->where('batches.0.member.saved', '0.5 BCH')
             ->where('batches.0.member.progress', 50)
+            ->where('batches.0.leave.canLeave', true)
+            ->where('batches.0.leave.pendingLeave.leaverName', 'A member')
+            ->where('batches.0.leave.pendingLeave.voted', false)
+            ->where('batches.0.leave.pendingLeave.isLeaver', false)
             ->has('batches.0.contributions', 1)
             ->where('batches.0.contributions.0.round', 1)
             ->where('batches.0.contributions.0.amount', '0.5 BCH')

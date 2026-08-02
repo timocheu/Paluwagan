@@ -70,4 +70,12 @@ class Batch extends Model
     {
         return $this->hasManyThrough(BatchContribution::class, BatchMember::class);
     }
+
+    /**
+     * @return HasMany<BatchEvent, $this>
+     */
+    public function events(): HasMany
+    {
+        return $this->hasMany(BatchEvent::class);
+    }
 }

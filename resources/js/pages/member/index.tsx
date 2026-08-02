@@ -1,5 +1,5 @@
 import { Form, Head, Link } from '@inertiajs/react';
-import { ArrowRight, KeyRound, Wallet } from 'lucide-react';
+import { AlertTriangle, ArrowRight, KeyRound, Wallet } from 'lucide-react';
 import InputError from '@/components/input-error';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -7,11 +7,18 @@ import { Label } from '@/components/ui/label';
 import { Spinner } from '@/components/ui/spinner';
 import { batch, forget, register } from '@/routes/member';
 
-type Props = {
-    wallet?: string | null;
+type PendingDecision = {
+    batchId: string;
+    batchName: string;
+    leaverName: string;
 };
 
-export default function MemberIndex({ wallet }: Props) {
+type Props = {
+    wallet?: string | null;
+    pendingDecisions?: PendingDecision[];
+};
+
+export default function MemberIndex({ wallet, pendingDecisions = [] }: Props) {
     return (
         <>
             <Head title="Member Portal" />
@@ -23,7 +30,10 @@ export default function MemberIndex({ wallet }: Props) {
                         className="mb-8 flex items-center justify-center gap-2"
                     >
                         <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-[#635BFF]">
-                            <Wallet className="h-4 w-4 text-white" strokeWidth={2} />
+                            <Wallet
+                                className="h-4 w-4 text-white"
+                                strokeWidth={2}
+                            />
                         </div>
                         <span className="text-xl font-semibold tracking-tight text-[#0A2540]">
                             Paluwagan
@@ -33,7 +43,10 @@ export default function MemberIndex({ wallet }: Props) {
                     <div className="rounded-2xl border border-[#0A2540]/10 bg-white p-8 shadow-sm">
                         <div className="mb-6 flex items-center gap-3">
                             <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-[#635BFF]/10">
-                                <KeyRound className="h-5 w-5 text-[#635BFF]" strokeWidth={2} />
+                                <KeyRound
+                                    className="h-5 w-5 text-[#635BFF]"
+                                    strokeWidth={2}
+                                />
                             </div>
                             <div>
                                 <h1 className="text-xl font-semibold tracking-tight text-[#0A2540]">
@@ -47,6 +60,34 @@ export default function MemberIndex({ wallet }: Props) {
 
                         {wallet ? (
                             <div className="flex flex-col gap-5">
+                                {pendingDecisions.length > 0 && (
+                                    <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3">
+                                        <p className="flex items-center gap-2 text-xs font-medium text-amber-800">
+                                            <AlertTriangle
+                                                className="h-3.5 w-3.5"
+                                                strokeWidth={2}
+                                            />
+                                            {pendingDecisions[0].leaverName}{' '}
+                                            wants to leave{' '}
+                                            {pendingDecisions[0].batchName}
+                                        </p>
+                                        <p className="mt-1 text-xs text-amber-700">
+                                            Your answer decides what happens to
+                                            this circle.
+                                        </p>
+                                        <Link
+                                            href={batch()}
+                                            className="mt-2 inline-flex items-center gap-1 text-xs font-semibold text-amber-900 hover:underline"
+                                        >
+                                            Review decision
+                                            <ArrowRight
+                                                className="h-3 w-3"
+                                                strokeWidth={2}
+                                            />
+                                        </Link>
+                                    </div>
+                                )}
+
                                 <div className="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3">
                                     <p className="text-xs font-medium text-emerald-700">
                                         Registered wallet
@@ -61,7 +102,10 @@ export default function MemberIndex({ wallet }: Props) {
                                     className="inline-flex items-center justify-center gap-2 rounded-lg bg-[#635BFF] px-6 py-3 text-sm font-medium text-white shadow-sm transition-colors hover:bg-[#635BFF]/90"
                                 >
                                     View my batches
-                                    <ArrowRight className="h-4 w-4" strokeWidth={2} />
+                                    <ArrowRight
+                                        className="h-4 w-4"
+                                        strokeWidth={2}
+                                    />
                                 </Link>
 
                                 <Form action={forget()}>
@@ -94,7 +138,9 @@ export default function MemberIndex({ wallet }: Props) {
                                                 autoFocus
                                                 placeholder="bchtest:q..."
                                             />
-                                            <InputError message={errors.wallet} />
+                                            <InputError
+                                                message={errors.wallet}
+                                            />
                                         </div>
 
                                         <Button
@@ -109,10 +155,6 @@ export default function MemberIndex({ wallet }: Props) {
                                 )}
                             </Form>
                         )}
-
-                        <p className="mt-6 text-center text-xs text-[#0A2540]/50">
-                            No login required — your wallet is your identity.
-                        </p>
                     </div>
                 </div>
             </div>

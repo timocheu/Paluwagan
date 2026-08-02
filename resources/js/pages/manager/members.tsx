@@ -7,12 +7,12 @@ import {
     Copy,
     FileText,
     Info,
-    MoreHorizontal,
 } from 'lucide-react';
 import type { ReactNode } from 'react';
 import { useState } from 'react';
 import { Amount } from '@/components/amount';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { Badge } from '@/components/ui/badge';
 import { CreateMemberDialog } from '@/components/ui/batches/create-member';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
@@ -26,7 +26,7 @@ import { Progress } from '@/components/ui/progress';
 import AppLayout from '@/layouts/app-layout';
 import { advance, expire, index, show } from '@/routes/batches';
 
-type MemberStatus = 'Released' | 'Active' | 'Slashed';
+type MemberStatus = 'Released' | 'Active' | 'Slashed' | 'Leaving' | 'Left';
 
 interface BatchInfo {
     contributionModel: string;
@@ -149,7 +149,6 @@ function WalletAddress({ address }: { address: string }) {
         >
             {address.slice(0, 6)}...
             {address.slice(-4)}
-
             {copied ? (
                 <>
                     <Check className="h-3 w-3 text-green-600" />
@@ -181,11 +180,10 @@ function Txid({ txid }: { txid: string }) {
             onClick={handleCopy}
             title={txid}
             aria-label="Copy transaction id"
-            className="inline-flex items-center gap-1 whitespace-nowrap font-mono text-xs text-muted-foreground transition-colors hover:text-foreground"
+            className="inline-flex items-center gap-1 font-mono text-xs whitespace-nowrap text-muted-foreground transition-colors hover:text-foreground"
         >
             {txid.slice(0, 8)}...
             {txid.slice(-8)}
-
             {copied ? (
                 <Check className="h-3 w-3 shrink-0 text-green-600" />
             ) : (
@@ -329,14 +327,18 @@ function RoundControls({
                             disabled={running !== null}
                             onClick={() => run('expire')}
                         >
-                            {running === 'expire' ? 'Reclaiming...' : 'Expire round'}
+                            {running === 'expire'
+                                ? 'Reclaiming...'
+                                : 'Expire round'}
                         </Button>
                     )}
                     <Button
                         disabled={completed || running !== null}
                         onClick={() => run('advance')}
                     >
-                        {running === 'advance' ? 'Paying out...' : 'Simulate next round'}
+                        {running === 'advance'
+                            ? 'Paying out...'
+                            : 'Simulate next round'}
                     </Button>
                 </div>
 
@@ -344,7 +346,9 @@ function RoundControls({
                     <p className="w-full text-sm text-red-600">{flash.error}</p>
                 )}
                 {flash?.success && (
-                    <p className="w-full text-sm text-emerald-600">{flash.success}</p>
+                    <p className="w-full text-sm text-emerald-600">
+                        {flash.success}
+                    </p>
                 )}
             </CardContent>
         </Card>
@@ -352,16 +356,27 @@ function RoundControls({
 }
 
 function BatchInformation({ info }: { info: BatchInfo }) {
-    const rows: Array<{ label: string; value: string | number; currency?: boolean }> = [
+    const rows: Array<{
+        label: string;
+        value: string | number;
+        currency?: boolean;
+    }> = [
         { label: 'Contribution Model', value: info.contributionModel },
-        { label: 'Contribution Amount', value: info.contributionAmount, currency: true },
+        {
+            label: 'Contribution Amount',
+            value: info.contributionAmount,
+            currency: true,
+        },
         { label: 'Target Payout', value: info.targetPayout, currency: true },
         { label: 'Contribution Schedule', value: info.schedule },
         { label: 'Payout Order', value: info.rotation },
         { label: 'Members', value: info.memberCount },
         { label: 'Total Cycles', value: info.cyclesTotal },
         { label: 'Current Cycle', value: info.cyclesCurrent },
-        { label: 'Next Contribution Date', value: info.nextContributionDate ?? '—' },
+        {
+            label: 'Next Contribution Date',
+            value: info.nextContributionDate ?? '—',
+        },
         { label: 'Smart Contract Status', value: info.contractStatus },
     ];
 
@@ -374,7 +389,12 @@ function BatchInformation({ info }: { info: BatchInfo }) {
                         Configuration and on-chain status for this batch
                     </p>
                 </div>
-                <Button type="button" variant="outline" className="gap-2" onClick={() => {}}>
+                <Button
+                    type="button"
+                    variant="outline"
+                    className="gap-2"
+                    onClick={() => {}}
+                >
                     <FileText className="h-4 w-4 text-muted-foreground" />
                     View Contract PDF
                 </Button>
@@ -386,15 +406,41 @@ function BatchInformation({ info }: { info: BatchInfo }) {
                             key={row.label}
                             className="flex items-baseline justify-between gap-4 border-b border-neutral-100 pb-2"
                         >
-                            <dt className="text-sm text-muted-foreground">{row.label}</dt>
+                            <dt className="text-sm text-muted-foreground">
+                                {row.label}
+                            </dt>
                             <dd className="text-sm font-medium text-[#0A2540]">
-                                {row.currency ? <Amount value={String(row.value)} /> : row.value}
+                                {row.currency ? (
+                                    <Amount value={String(row.value)} />
+                                ) : (
+                                    row.value
+                                )}
                             </dd>
                         </div>
                     ))}
                 </dl>
             </CardContent>
         </Card>
+    );
+}
+
+function MemberStatusBadge({ status }: { status: MemberStatus }) {
+    const styles: Record<string, string> = {
+        Leaving: 'border-amber-200 bg-amber-50 text-amber-700',
+        Left: 'border-red-200 bg-red-50 text-red-700',
+        Slashed: 'border-red-200 bg-red-50 text-red-700',
+        Released: 'border-emerald-200 bg-emerald-50 text-emerald-700',
+        Active: 'border-blue-200 bg-blue-50 text-blue-700',
+    };
+
+    return (
+        <Badge
+            className={
+                styles[status] ?? 'border-gray-200 bg-gray-50 text-gray-700'
+            }
+        >
+            {status}
+        </Badge>
     );
 }
 
@@ -415,9 +461,7 @@ function MemberCard({ member }: { member: Member }) {
                         <WalletAddress address={member.address} />
                     </div>
                 </div>
-                <Button variant="ghost" size="icon" className="-mr-1.5 h-7 w-7">
-                    <MoreHorizontal className="h-4 w-4 text-muted-foreground" />
-                </Button>
+                <MemberStatusBadge status={member.status} />
             </CardHeader>
 
             <CardContent className="space-y-4 p-5 pt-4">
@@ -429,7 +473,10 @@ function MemberCard({ member }: { member: Member }) {
                     <Progress value={member.progress} className="h-1.5" />
                     <div className="flex items-center justify-between text-sm">
                         <span>
-                            <Amount value={member.saved} subClassName="text-muted-foreground" />{' '}
+                            <Amount
+                                value={member.saved}
+                                subClassName="text-muted-foreground"
+                            />{' '}
                             <span className="text-muted-foreground">
                                 contributed
                             </span>
@@ -446,14 +493,30 @@ function MemberCard({ member }: { member: Member }) {
                 </div>
                 <div className="flex items-center justify-between text-sm">
                     <span className="text-muted-foreground">Remaining</span>
-                    <span><Amount value={member.remaining} subClassName="text-muted-foreground" /></span>
+                    <span>
+                        <Amount
+                            value={member.remaining}
+                            subClassName="text-muted-foreground"
+                        />
+                    </span>
+                </div>
+                <div className="flex items-center justify-between text-sm">
+                    <span className="text-muted-foreground">
+                        Commitment deposit
+                    </span>
+                    <span className="text-right">
+                        <Amount
+                            value={member.saved}
+                            subClassName="text-muted-foreground"
+                        />
+                    </span>
                 </div>
             </CardContent>
         </Card>
     );
 }
 
-type TransactionType = 'contribution' | 'payout';
+type TransactionType = 'contribution' | 'payout' | 'claim' | 'refund';
 
 interface Transaction {
     txid: string;
@@ -466,7 +529,7 @@ interface Transaction {
 
 function TransactionLog({ transactions }: { transactions: Transaction[] }) {
     const rowClass = (type: TransactionType) =>
-        type === 'payout'
+        type === 'payout' || type === 'claim'
             ? 'bg-emerald-50/60 transition-colors hover:bg-emerald-100/80'
             : 'bg-red-50/60 transition-colors hover:bg-red-100/80';
 
@@ -474,18 +537,20 @@ function TransactionLog({ transactions }: { transactions: Transaction[] }) {
         <Card className="rounded-2xl border-neutral-200 shadow-none">
             <CardHeader className="p-5 pb-3">
                 <h3 className="text-lg font-semibold">Transaction History</h3>
-                <p className="text-sm text-muted-foreground mt-1">
+                <p className="mt-1 text-sm text-muted-foreground">
                     All transactions for this wallet
                 </p>
             </CardHeader>
             <CardContent className="p-5 pt-0">
                 <div className="max-h-[400px] overflow-y-auto rounded-lg border border-neutral-100">
                     <table className="w-full text-sm">
-                        <thead className="sticky top-0 bg-neutral-50 text-left text-xs uppercase tracking-wide text-muted-foreground">
+                        <thead className="sticky top-0 bg-neutral-50 text-left text-xs tracking-wide text-muted-foreground uppercase">
                             <tr>
                                 <th className="px-4 py-3 font-medium">Txid</th>
                                 <th className="px-4 py-3 font-medium">From</th>
-                                <th className="px-4 py-3 font-medium">Amount</th>
+                                <th className="px-4 py-3 font-medium">
+                                    Amount
+                                </th>
                                 <th className="px-4 py-3 font-medium">Round</th>
                                 <th className="px-4 py-3 font-medium">To</th>
                             </tr>
@@ -514,7 +579,9 @@ function TransactionLog({ transactions }: { transactions: Transaction[] }) {
                                             <Amount value={tx.amount} />
                                         </td>
                                         <td className="px-4 py-3 whitespace-nowrap text-muted-foreground">
-                                            Round {tx.round}
+                                            {tx.round > 0
+                                                ? `Round ${tx.round}`
+                                                : '—'}
                                         </td>
                                         <td className="px-4 py-3">{tx.to}</td>
                                     </tr>
@@ -551,7 +618,6 @@ export default function MembersDashboard({
     transactions?: Transaction[];
     flash?: { success?: string | null; error?: string | null };
 }) {
-
     const totalPotBalance = members.reduce((total, member) => {
         const amount = parseFloat(member.saved.replace(' BCH', '')) || 0;
 
@@ -574,14 +640,13 @@ export default function MembersDashboard({
                 <div className="mt-5">
                     <TransactionLog transactions={transactions} />
                 </div>
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
+                <div className="grid grid-cols-1 gap-5 lg:grid-cols-3">
                     <div className="lg:col-span-3">
                         <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
                             {members.map((m) => (
                                 <MemberCard key={m.id} member={m} />
                             ))}
                         </div>
-
                     </div>
                 </div>
                 <div className="lg:col-span-1">
@@ -625,4 +690,6 @@ function MembersLayout({ children }: { children: ReactNode }) {
     );
 }
 
-MembersDashboard.layout = (page: ReactNode) => <MembersLayout>{page}</MembersLayout>;
+MembersDashboard.layout = (page: ReactNode) => (
+    <MembersLayout>{page}</MembersLayout>
+);

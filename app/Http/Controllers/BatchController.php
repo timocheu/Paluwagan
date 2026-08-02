@@ -100,9 +100,15 @@ class BatchController extends Controller
         $sessionWallet = session('member_wallet');
 
         if ($sessionWallet !== null) {
-            $isOwnedBySessionMember = collect($data['members'])->contains(
-                fn (array $memberData) => $memberData['wallet'] === $sessionWallet
-            );
+            $isOwnedBySessionMember = false;
+
+            foreach ($data['members'] as $memberData) {
+                if ($memberData['wallet'] === $sessionWallet) {
+                    $isOwnedBySessionMember = true;
+
+                    break;
+                }
+            }
 
             if ($isOwnedBySessionMember) {
                 return redirect()->route('member.batch');
@@ -170,7 +176,7 @@ class BatchController extends Controller
      */
     public function show(Batch $batch): Response
     {
-        $batch->load('batchMembers.member', 'batchMembers.contributions');
+        $batch->load('batchMembers.member', 'batchMembers.contributions', 'events');
 
         $members = $batch->batchMembers
             ->sortBy('position')
@@ -243,7 +249,8 @@ class BatchController extends Controller
 
     /**
      * Rebuild the wallet ledger from on-chain data: each member's contribution
-     * (member → batch wallet) and the round payouts (batch wallet → recipient).
+     * (member → batch wallet), the round payouts (batch wallet → recipient)
+     * and the leave simulation events (refunds and organizer claims).
      *
      * @return array<int, array{txid: string, from: string, to: string, amount: string, round: int, type: string}>
      */
@@ -281,8 +288,25 @@ class BatchController extends Controller
             ];
         }
 
+        foreach ($batch->events as $event) {
+            $transactions[] = [
+                'txid' => $event->txid,
+                'from' => $event->from_name,
+                'to' => $event->to_name,
+                'amount' => $this->bch($event->amount_sats),
+                'round' => 0,
+                'type' => $event->type,
+            ];
+        }
+
         return collect($transactions)
-            ->sortBy([['round', 'desc'], ['type', 'desc']])
+            ->sortBy([
+                fn (array $a, array $b) => (
+                    in_array($a['type'], ['claim', 'refund'], true) ? 0 : 1
+                ) - (in_array($b['type'], ['claim', 'refund'], true) ? 0 : 1),
+                ['round', 'desc'],
+                ['type', 'desc'],
+            ])
             ->values()
             ->all();
     }
