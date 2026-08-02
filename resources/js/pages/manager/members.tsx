@@ -409,9 +409,12 @@ function BatchInformation({ info }: { info: BatchInfo }) {
                             <dt className="text-sm text-muted-foreground">
                                 {row.label}
                             </dt>
-                            <dd className="text-sm font-medium text-[#0A2540]">
+                            <dd className="text-right text-sm font-medium text-[#0A2540]">
                                 {row.currency ? (
-                                    <Amount value={String(row.value)} />
+                                    <Amount
+                                        value={String(row.value)}
+                                        className="items-end"
+                                    />
                                 ) : (
                                     row.value
                                 )}
@@ -471,36 +474,37 @@ function MemberCard({ member }: { member: Member }) {
 
                 <div className="space-y-2">
                     <Progress value={member.progress} className="h-1.5" />
-                    <div className="flex items-center justify-between text-sm">
-                        <span>
+                    <div className="flex items-baseline justify-between text-sm">
+                        <div className="flex items-baseline gap-1">
                             <Amount
                                 value={member.saved}
                                 subClassName="text-muted-foreground"
-                            />{' '}
+                            />
                             <span className="text-muted-foreground">
                                 contributed
                             </span>
-                        </span>
+                        </div>
                         <span className="text-muted-foreground">
                             {member.percent}%
                         </span>
                     </div>
                 </div>
 
-                <div className="flex items-center justify-between text-sm">
+                <div className="flex items-baseline justify-between text-sm">
                     <span className="text-muted-foreground">Due</span>
                     <span>{member.due}</span>
                 </div>
-                <div className="flex items-center justify-between text-sm">
+                <div className="flex items-baseline justify-between text-sm">
                     <span className="text-muted-foreground">Remaining</span>
-                    <span>
+                    <span className="text-right">
                         <Amount
                             value={member.remaining}
                             subClassName="text-muted-foreground"
+                            className="items-end"
                         />
                     </span>
                 </div>
-                <div className="flex items-center justify-between text-sm">
+                <div className="flex items-baseline justify-between text-sm">
                     <span className="text-muted-foreground">
                         Commitment deposit
                     </span>
@@ -508,6 +512,7 @@ function MemberCard({ member }: { member: Member }) {
                         <Amount
                             value={member.saved}
                             subClassName="text-muted-foreground"
+                            className="items-end"
                         />
                     </span>
                 </div>

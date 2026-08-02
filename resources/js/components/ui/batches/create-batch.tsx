@@ -1,8 +1,9 @@
-import { useForm } from '@inertiajs/react';
+import { useForm, usePage } from '@inertiajs/react';
 import { Check, FileText, Plus, Trash2 } from 'lucide-react';
 import { FormEventHandler } from 'react';
 import { Button } from '@/components/ui/button';
 import { store } from '@/routes/batches';
+import { pesoFromBchString } from '@/lib/currency';
 import {
     Dialog,
     DialogClose,
@@ -40,6 +41,7 @@ const rotations = [
 ] as const;
 
 export function CreateBatchDialog() {
+    const rate = usePage().props.currency.rate;
     const { data, setData, post, processing, errors, reset } = useForm<{
         name: string;
         contribution: string;
@@ -144,6 +146,11 @@ export function CreateBatchDialog() {
                                         BCH
                                     </span>
                                 </div>
+                                {rate > 0 && data.contribution && (
+                                    <p className="mt-1 text-xs text-muted-foreground">
+                                        ≈ {pesoFromBchString(data.contribution, rate)}
+                                    </p>
+                                )}
                                 {errors.contribution && (
                                     <p className="text-sm text-red-600">{errors.contribution}</p>
                                 )}
