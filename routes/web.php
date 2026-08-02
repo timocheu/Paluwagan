@@ -20,6 +20,9 @@ Route::get('/batches', [BatchController::class, 'index'])->name('batches.index')
 Route::get('/batches/{batch}', [BatchController::class, 'show'])->name('batches.show');
 Route::post('/batches/{batch}/advance', [BatchController::class, 'advance'])->name('batches.advance');
 Route::post('/batches/{batch}/expire', [BatchController::class, 'expire'])->name('batches.expire');
+Route::post('/batches/{batch}/simulate-quit', [BatchController::class, 'simulateQuit'])->name('batches.simulateQuit');
+Route::post('/batches/{batch}/simulate-stop', [BatchController::class, 'simulateStop'])->name('batches.simulateStop');
+Route::post('/batches/{batch}/simulate-split', [BatchController::class, 'simulateSplit'])->name('batches.simulateSplit');
 
 Route::post('/members', [MemberController::class, 'store'])->name('members.store');
 

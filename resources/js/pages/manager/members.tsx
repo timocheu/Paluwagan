@@ -24,7 +24,15 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Progress } from '@/components/ui/progress';
 import AppLayout from '@/layouts/app-layout';
-import { advance, expire, index, show } from '@/routes/batches';
+import {
+    advance,
+    expire,
+    index,
+    show,
+    simulateQuit,
+    simulateSplit,
+    simulateStop,
+} from '@/routes/batches';
 
 type MemberStatus = 'Released' | 'Active' | 'Slashed' | 'Leaving' | 'Left';
 
@@ -60,6 +68,7 @@ interface Member {
     address: string;
     contribution: string;
     saved: string;
+    deposit: string;
     progress: number;
     percent: number;
     due: string;
@@ -76,6 +85,7 @@ const defaultMembers: Member[] = [
         address: 'bchtest:qqvh...f9a',
         contribution: '0.5 BCH',
         saved: '0.5 BCH',
+        deposit: '0 BCH',
         progress: 100,
         percent: 100,
         due: 'Round 1',
@@ -90,6 +100,7 @@ const defaultMembers: Member[] = [
         address: 'bchtest:qzfx...vqk',
         contribution: '0.5 BCH',
         saved: '0.5 BCH',
+        deposit: '0.55 BCH',
         progress: 100,
         percent: 100,
         due: 'Round 2',
@@ -104,6 +115,7 @@ const defaultMembers: Member[] = [
         address: 'bchtest:qpwa...91m',
         contribution: '0.5 BCH',
         saved: '0.5 BCH',
+        deposit: '0.55 BCH',
         progress: 100,
         percent: 100,
         due: 'Round 2',
@@ -118,6 +130,7 @@ const defaultMembers: Member[] = [
         address: 'bchtest:qr7t...g7h',
         contribution: '0.5 BCH',
         saved: '0 BCH',
+        deposit: '0 BCH',
         progress: 0,
         percent: 0,
         due: 'Round 2',
@@ -283,14 +296,27 @@ function RoundControls({
     flash?: { success?: string | null; error?: string | null };
 }) {
     const completed = batchStatus === 'Completed';
-    const [running, setRunning] = useState<'advance' | 'expire' | null>(null);
+    const stopped = batchStatus === 'Stopped';
+    const canSimulate = batchStatus === 'Active' || batchStatus === 'Forming';
+    const [running, setRunning] = useState<
+        'advance' | 'expire' | 'quit' | 'split' | 'stop' | null
+    >(null);
 
-    const run = (action: 'advance' | 'expire') => {
+    const run = (action: 'advance' | 'expire' | 'quit' | 'split' | 'stop') => {
         setRunning(action);
-        router.post(
+        const url =
             action === 'advance'
                 ? advance.url({ batch: Number(batchId) })
-                : expire.url({ batch: Number(batchId) }),
+                : action === 'expire'
+                  ? expire.url({ batch: Number(batchId) })
+                  : action === 'quit'
+                    ? simulateQuit.url({ batch: Number(batchId) })
+                    : action === 'split'
+                      ? simulateSplit.url({ batch: Number(batchId) })
+                      : simulateStop.url({ batch: Number(batchId) });
+
+        router.post(
+            url,
             {},
             { preserveScroll: true, onFinish: () => setRunning(null) },
         );
@@ -320,7 +346,7 @@ function RoundControls({
                     )}
                 </div>
 
-                <div className="flex items-center gap-2">
+                <div className="flex flex-wrap items-center gap-2">
                     {!completed && (
                         <Button
                             variant="outline"
@@ -332,6 +358,33 @@ function RoundControls({
                                 : 'Expire round'}
                         </Button>
                     )}
+                    <Button
+                        variant="outline"
+                        disabled={!canSimulate || running !== null}
+                        onClick={() => run('quit')}
+                    >
+                        {running === 'quit'
+                            ? 'Processing...'
+                            : 'Simulate member quitting'}
+                    </Button>
+                    <Button
+                        variant="outline"
+                        disabled={!canSimulate || running !== null}
+                        onClick={() => run('split')}
+                    >
+                        {running === 'split'
+                            ? 'Processing...'
+                            : 'Simulate quit, no fill'}
+                    </Button>
+                    <Button
+                        variant="outline"
+                        disabled={completed || stopped || running !== null}
+                        onClick={() => run('stop')}
+                    >
+                        {running === 'stop'
+                            ? 'Processing...'
+                            : 'Simulate stop & refund'}
+                    </Button>
                     <Button
                         disabled={completed || running !== null}
                         onClick={() => run('advance')}
@@ -495,22 +548,12 @@ function MemberCard({ member }: { member: Member }) {
                     <span>{member.due}</span>
                 </div>
                 <div className="flex items-baseline justify-between text-sm">
-                    <span className="text-muted-foreground">Remaining</span>
-                    <span className="text-right">
-                        <Amount
-                            value={member.remaining}
-                            subClassName="text-muted-foreground"
-                            className="items-end"
-                        />
-                    </span>
-                </div>
-                <div className="flex items-baseline justify-between text-sm">
                     <span className="text-muted-foreground">
                         Commitment deposit
                     </span>
                     <span className="text-right">
                         <Amount
-                            value={member.saved}
+                            value={member.deposit}
                             subClassName="text-muted-foreground"
                             className="items-end"
                         />
@@ -521,7 +564,7 @@ function MemberCard({ member }: { member: Member }) {
     );
 }
 
-type TransactionType = 'contribution' | 'payout' | 'claim' | 'refund';
+type TransactionType = 'contribution' | 'payout' | 'claim' | 'refund' | 'split';
 
 interface Transaction {
     txid: string;
@@ -534,7 +577,7 @@ interface Transaction {
 
 function TransactionLog({ transactions }: { transactions: Transaction[] }) {
     const rowClass = (type: TransactionType) =>
-        type === 'payout' || type === 'claim'
+        type === 'payout' || type === 'claim' || type === 'split'
             ? 'bg-emerald-50/60 transition-colors hover:bg-emerald-100/80'
             : 'bg-red-50/60 transition-colors hover:bg-red-100/80';
 

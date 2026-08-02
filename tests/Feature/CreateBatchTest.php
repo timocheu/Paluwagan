@@ -11,7 +11,7 @@ it('creates a batch with members and their rotation positions', function () {
         'rotation' => 'fixed',
         'members' => [
             ['name' => 'Alice', 'wallet' => 'bchtest:aaaa1'],
-            ['name' => null, 'wallet' => 'bchtest:bbbb2'],
+            ['name' => 'Bob', 'wallet' => 'bchtest:bbbb2'],
             ['name' => 'Carol', 'wallet' => 'bchtest:cccc3'],
         ],
     ]);
@@ -21,6 +21,7 @@ it('creates a batch with members and their rotation positions', function () {
     $batch = $batch->refresh();
 
     expect($batch->contribution_sats)->toBe(50_000_000);
+    expect($batch->deposit_sats)->toBe(55_000_000);
     expect($batch->schedule)->toBe('monthly');
     expect($batch->rotation)->toBe('fixed');
     expect($batch->rounds_total)->toBe(3);
@@ -32,7 +33,7 @@ it('creates a batch with members and their rotation positions', function () {
     expect($pivots)->toHaveCount(3);
     expect($pivots->pluck('position')->all())->toBe([1, 2, 3]);
     expect($pivots[0]->member->name)->toBe('Alice');
-    expect($pivots[1]->member->name)->toBeNull();
+    expect($pivots[1]->member->name)->toBe('Bob');
     expect($pivots[2]->member->name)->toBe('Carol');
     expect(Member::count())->toBe(3);
 });
@@ -53,6 +54,7 @@ it('stores a random rotation batch', function () {
 
     expect($batch->rotation)->toBe('random');
     expect($batch->contribution_sats)->toBe(100_000_000);
+    expect($batch->deposit_sats)->toBe(110_000_000);
 });
 
 it('rejects an unknown rotation mode', function () {
@@ -84,6 +86,22 @@ it('rejects an invalid pay schedule', function () {
     ]);
 
     $response->assertSessionHasErrors('schedule');
+    expect(Batch::count())->toBe(0);
+});
+
+it('requires a name for every member for transparency', function () {
+    $response = $this->post(route('batches.store'), [
+        'name' => 'Circle Delta',
+        'contribution' => '0.5',
+        'schedule' => 'monthly',
+        'rotation' => 'fixed',
+        'members' => [
+            ['name' => 'Alice', 'wallet' => 'bchtest:aaaa1'],
+            ['name' => '', 'wallet' => 'bchtest:bbbb2'],
+        ],
+    ]);
+
+    $response->assertSessionHasErrors('members.1.name');
     expect(Batch::count())->toBe(0);
 });
 

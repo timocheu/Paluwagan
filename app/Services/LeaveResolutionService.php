@@ -82,14 +82,14 @@ class LeaveResolutionService
     private function continueWithout(Batch $batch, BatchMember $leaver): void
     {
         $batch->update(['status' => 'Active']);
-        $leaver->update(['status' => 'Left', 'continue_vote' => null]);
+        $leaver->update(['status' => 'Left', 'continue_vote' => null, 'deposit_returned' => true]);
 
         BatchEvent::create([
             'batch_id' => $batch->id,
             'type' => 'claim',
             'from_name' => 'Batch Wallet',
             'to_name' => 'Organizer',
-            'amount_sats' => $leaver->contributions->sum('amount_sats'),
+            'amount_sats' => $batch->depositSats(),
             'txid' => $this->eventTxid($batch, 'claim'),
         ]);
     }
@@ -97,24 +97,154 @@ class LeaveResolutionService
     private function stopAndRefund(Batch $batch, BatchMember $leaver): void
     {
         $batch->update(['status' => 'Stopped']);
-        $leaver->update(['status' => 'Left', 'continue_vote' => null]);
+        $leaver->update(['continue_vote' => null]);
 
         foreach ($batch->batchMembers as $bm) {
-            $saved = $bm->contributions->sum('amount_sats');
-
-            if ($saved === 0) {
+            if ($bm->deposit_returned) {
                 continue;
             }
+
+            $bm->update(['status' => 'Left', 'deposit_returned' => true]);
 
             BatchEvent::create([
                 'batch_id' => $batch->id,
                 'type' => 'refund',
                 'from_name' => 'Batch Wallet',
                 'to_name' => $bm->member->name ?? 'Member '.$bm->position,
-                'amount_sats' => $saved,
+                'amount_sats' => $batch->depositSats(),
                 'txid' => $this->eventTxid($batch, 'refund'.$bm->position),
             ]);
         }
+    }
+
+    /**
+     * Manager-facing simulation: a member quits and the organizer takes over
+     * their slot, claiming the member's commitment deposit.
+     */
+    public function simulateQuit(Batch $batch): string
+    {
+        if (! in_array($batch->status, ['Forming', 'Active'], true)) {
+            throw new RuntimeException('This circle cannot simulate a quit in its current state.');
+        }
+
+        $leaver = $batch->batchMembers()
+            ->where('status', 'Active')
+            ->orderBy('position')
+            ->first();
+
+        if ($leaver === null) {
+            throw new RuntimeException('No active member is available to quit.');
+        }
+
+        $leaver->load('member');
+
+        $leaver->update(['status' => 'Left', 'deposit_returned' => true]);
+        $batch->update(['status' => 'Active']);
+
+        BatchEvent::create([
+            'batch_id' => $batch->id,
+            'type' => 'claim',
+            'from_name' => 'Batch Wallet',
+            'to_name' => 'Organizer',
+            'amount_sats' => $batch->depositSats(),
+            'txid' => $this->eventTxid($batch, 'simulated-quit'),
+        ]);
+
+        return $leaver->member->name ?? 'Member '.$leaver->position;
+    }
+
+    /**
+     * Manager-facing simulation: the members decide to end the circle, so the
+     * batch stops and every member gets their deposits back.
+     */
+    public function simulateStop(Batch $batch): void
+    {
+        if (in_array($batch->status, ['Completed', 'Stopped'], true)) {
+            throw new RuntimeException('This circle is already finished.');
+        }
+
+        $batch->load('batchMembers.member');
+        $batch->update(['status' => 'Stopped']);
+
+        foreach ($batch->batchMembers as $bm) {
+            if ($bm->deposit_returned) {
+                continue;
+            }
+
+            $bm->update(['status' => 'Left', 'deposit_returned' => true]);
+
+            BatchEvent::create([
+                'batch_id' => $batch->id,
+                'type' => 'refund',
+                'from_name' => 'Batch Wallet',
+                'to_name' => $bm->member->name ?? 'Member '.$bm->position,
+                'amount_sats' => $batch->depositSats(),
+                'txid' => $this->eventTxid($batch, 'simulated-stop'.$bm->position),
+            ]);
+        }
+    }
+
+    /**
+     * Manager-facing simulation: a member quits and the organizer does not
+     * fill the slot, so the leaver's deposit is split evenly among the
+     * remaining members and everyone gets their own deposit back.
+     */
+    public function simulateSplit(Batch $batch): string
+    {
+        if (! in_array($batch->status, ['Forming', 'Active'], true)) {
+            throw new RuntimeException('This circle cannot simulate a quit in its current state.');
+        }
+
+        $batch->load('batchMembers.member');
+
+        $leaver = $batch->batchMembers
+            ->first(fn (BatchMember $bm) => $bm->status === 'Active');
+
+        if ($leaver === null) {
+            throw new RuntimeException('No active member is available to quit.');
+        }
+
+        $remaining = $batch->batchMembers
+            ->where('status', 'Active')
+            ->reject(fn (BatchMember $bm) => $bm->id === $leaver->id)
+            ->values();
+
+        if ($remaining->isEmpty()) {
+            throw new RuntimeException('No remaining members to split the deposit with.');
+        }
+
+        $deposit = $batch->depositSats();
+        $share = intdiv($deposit, $remaining->count());
+        $remainder = $deposit - ($share * $remaining->count());
+
+        $leaver->update(['status' => 'Left', 'deposit_returned' => true]);
+        $batch->update(['status' => 'Stopped']);
+
+        $leaverName = $leaver->member->name ?? 'Member '.$leaver->position;
+
+        foreach ($remaining as $index => $bm) {
+            $bm->update(['status' => 'Left', 'deposit_returned' => true]);
+
+            BatchEvent::create([
+                'batch_id' => $batch->id,
+                'type' => 'split',
+                'from_name' => $leaverName,
+                'to_name' => $bm->member->name ?? 'Member '.$bm->position,
+                'amount_sats' => $share + ($index === 0 ? $remainder : 0),
+                'txid' => $this->eventTxid($batch, 'split'.$bm->position),
+            ]);
+
+            BatchEvent::create([
+                'batch_id' => $batch->id,
+                'type' => 'refund',
+                'from_name' => 'Batch Wallet',
+                'to_name' => $bm->member->name ?? 'Member '.$bm->position,
+                'amount_sats' => $batch->depositSats(),
+                'txid' => $this->eventTxid($batch, 'split-refund'.$bm->position),
+            ]);
+        }
+
+        return $leaverName;
     }
 
     private function eventTxid(Batch $batch, string $seed): string

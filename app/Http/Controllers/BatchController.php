@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Batch;
 use App\Models\BatchMember;
 use App\Models\Member;
+use App\Services\LeaveResolutionService;
 use App\Services\RoundService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -61,7 +62,7 @@ class BatchController extends Controller
             'rotation' => ['required', 'in:fixed,random'],
             'contribution' => ['required', 'numeric', 'min:0.00000001'],
             'members' => ['required', 'array', 'min:2'],
-            'members.*.name' => ['nullable', 'string', 'max:255'],
+            'members.*.name' => ['required', 'string', 'max:255'],
             'members.*.wallet' => ['required', 'string', 'max:255'],
         ]);
 
@@ -72,6 +73,7 @@ class BatchController extends Controller
             'schedule' => $data['schedule'],
             'rotation' => $data['rotation'],
             'contribution_sats' => $contributionSats,
+            'deposit_sats' => (int) round($contributionSats * 1.1),
             'rounds_total' => count($data['members']),
             'created_by_wallet' => session('member_wallet'),
         ]);
@@ -172,6 +174,57 @@ class BatchController extends Controller
     }
 
     /**
+     * Simulate a member quitting: the organizer takes over the slot and claims
+     * the member's commitment deposit.
+     */
+    public function simulateQuit(Batch $batch): RedirectResponse
+    {
+        try {
+            $leaverName = app(LeaveResolutionService::class)->simulateQuit($batch);
+
+            return redirect()
+                ->route('batches.show', $batch)
+                ->with('success', $leaverName.' quit — the organizer claimed their commitment deposit.');
+        } catch (Throwable $e) {
+            return back()->withErrors(['simulate' => $e->getMessage()]);
+        }
+    }
+
+    /**
+     * Simulate the members deciding to end the circle: the batch stops and
+     * every member gets their deposits back.
+     */
+    public function simulateStop(Batch $batch): RedirectResponse
+    {
+        try {
+            app(LeaveResolutionService::class)->simulateStop($batch);
+
+            return redirect()
+                ->route('batches.show', $batch)
+                ->with('success', 'Circle stopped — every member\'s deposit was refunded.');
+        } catch (Throwable $e) {
+            return back()->withErrors(['simulate' => $e->getMessage()]);
+        }
+    }
+
+    /**
+     * Simulate a member quitting with no replacement: the leaver's deposit is
+     * split among the remaining members and everyone gets their deposit back.
+     */
+    public function simulateSplit(Batch $batch): RedirectResponse
+    {
+        try {
+            $leaverName = app(LeaveResolutionService::class)->simulateSplit($batch);
+
+            return redirect()
+                ->route('batches.show', $batch)
+                ->with('success', $leaverName.' quit — their deposit was split among the members.');
+        } catch (Throwable $e) {
+            return back()->withErrors(['simulate' => $e->getMessage()]);
+        }
+    }
+
+    /**
      * Display the specified resource.
      */
     public function show(Batch $batch): Response
@@ -199,7 +252,7 @@ class BatchController extends Controller
             'batchInfo' => $this->batchInfoPayload($batch),
             'flash' => [
                 'success' => session('success'),
-                'error' => session('errors') ? session('errors')->first('round') : null,
+                'error' => session('errors') ? session('errors')->first(['round', 'simulate']) : null,
             ],
         ]);
     }
@@ -302,8 +355,8 @@ class BatchController extends Controller
         return collect($transactions)
             ->sortBy([
                 fn (array $a, array $b) => (
-                    in_array($a['type'], ['claim', 'refund'], true) ? 0 : 1
-                ) - (in_array($b['type'], ['claim', 'refund'], true) ? 0 : 1),
+                    in_array($a['type'], ['claim', 'refund', 'split'], true) ? 0 : 1
+                ) - (in_array($b['type'], ['claim', 'refund', 'split'], true) ? 0 : 1),
                 ['round', 'desc'],
                 ['type', 'desc'],
             ])
@@ -318,6 +371,7 @@ class BatchController extends Controller
      *     address: string,
      *     contribution: string,
      *     saved: string,
+     *     deposit: string,
      *     progress: int,
      *     percent: int,
      *     due: string,
@@ -339,6 +393,7 @@ class BatchController extends Controller
             'address' => $bm->member->wallet,
             'contribution' => $this->bch($batch->contribution_sats),
             'saved' => $this->bch($saved),
+            'deposit' => $this->bch($bm->deposit_returned ? 0 : $batch->depositSats()),
             'progress' => $percent,
             'percent' => $percent,
             'due' => 'Round '.$batch->rounds_current,

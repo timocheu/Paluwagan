@@ -56,6 +56,10 @@ export function CreateBatchDialog() {
         members: [{ name: '', wallet: '' }],
     });
 
+    const depositBch = data.contribution
+        ? Number((parseFloat(data.contribution) * 1.1).toFixed(8))
+        : 0;
+
     const updateMember = (index: number, field: keyof MemberInput, value: string) => {
         const members = data.members.map((member, i) => (i === index ? { ...member, [field]: value } : member));
         setData('members', members);
@@ -151,6 +155,14 @@ export function CreateBatchDialog() {
                                         ≈ {pesoFromBchString(data.contribution, rate)}
                                     </p>
                                 )}
+                                {data.contribution && (
+                                    <p className="mt-1 text-xs font-medium text-[#0A2540]">
+                                        Commitment deposit: {depositBch} BCH
+                                        {rate > 0 && (
+                                            <> (≈ {pesoFromBchString(String(depositBch), rate)})</>
+                                        )}
+                                    </p>
+                                )}
                                 {errors.contribution && (
                                     <p className="text-sm text-red-600">{errors.contribution}</p>
                                 )}
@@ -209,9 +221,10 @@ export function CreateBatchDialog() {
                                     <div key={index} className="flex items-start gap-2">
                                         <div className="grid flex-1 grid-cols-2 gap-2">
                                             <Input
-                                                placeholder="Name (optional)"
+                                                placeholder="Name"
                                                 value={member.name}
                                                 onChange={(e) => updateMember(index, 'name', e.target.value)}
+                                                required
                                             />
                                             <Input
                                                 placeholder="Wallet address"

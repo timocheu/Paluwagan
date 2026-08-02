@@ -18,6 +18,7 @@ use Illuminate\Support\Carbon;
  * @property string $schedule
  * @property string $rotation
  * @property int $contribution_sats
+ * @property int|null $deposit_sats
  * @property int $rounds_total
  * @property int $rounds_current
  * @property string|null $contract_address
@@ -27,7 +28,7 @@ use Illuminate\Support\Carbon;
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
  */
-#[Fillable(['name', 'status', 'schedule', 'rotation', 'contribution_sats', 'rounds_total', 'rounds_current', 'contract_address', 'pot_address', 'created_by_wallet', 'last_payout_tx'])]
+#[Fillable(['name', 'status', 'schedule', 'rotation', 'contribution_sats', 'deposit_sats', 'rounds_total', 'rounds_current', 'contract_address', 'pot_address', 'created_by_wallet', 'last_payout_tx'])]
 class Batch extends Model
 {
     /** @use HasFactory<BatchFactory> */
@@ -45,6 +46,15 @@ class Batch extends Model
         'rounds_total' => 0,
         'rounds_current' => 0,
     ];
+
+    /**
+     * The commitment deposit each member pays at sign-up: the agreed
+     * contribution plus 10%.
+     */
+    public function depositSats(): int
+    {
+        return $this->deposit_sats ?? (int) round($this->contribution_sats * 1.1);
+    }
 
     /**
      * @return HasMany<BatchMember, $this>

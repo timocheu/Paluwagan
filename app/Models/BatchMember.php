@@ -17,13 +17,14 @@ use Illuminate\Support\Carbon;
  * @property int $position
  * @property int|null $payout_order
  * @property string $status
+ * @property bool $deposit_returned
  * @property bool|null $continue_vote
  * @property string|null $payout_tx
  * @property bool $auto_pay
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
  */
-#[Fillable(['batch_id', 'member_id', 'position', 'payout_order', 'status', 'continue_vote', 'payout_tx', 'auto_pay'])]
+#[Fillable(['batch_id', 'member_id', 'position', 'payout_order', 'status', 'deposit_returned', 'continue_vote', 'payout_tx', 'auto_pay'])]
 class BatchMember extends Model
 {
     /** @use HasFactory<BatchMemberFactory> */
@@ -37,7 +38,18 @@ class BatchMember extends Model
     protected $attributes = [
         'status' => 'Active',
         'auto_pay' => false,
+        'deposit_returned' => false,
     ];
+
+    /**
+     * @return array<string, string>
+     */
+    protected function casts(): array
+    {
+        return [
+            'deposit_returned' => 'boolean',
+        ];
+    }
 
     /**
      * @return BelongsTo<Batch, $this>
