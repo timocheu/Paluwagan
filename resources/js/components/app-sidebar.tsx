@@ -28,16 +28,6 @@ const managerNavItems: NavItem[] = [
         href: index(),
         icon: Users,
     },
-    {
-        title: 'Contributions',
-        href: '#',
-        icon: Wallet,
-    },
-    {
-        title: 'Payouts',
-        href: '#',
-        icon: Banknote,
-    },
 ];
 
 const memberNavItems: NavItem[] = [

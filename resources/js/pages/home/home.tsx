@@ -86,7 +86,7 @@ function Logo() {
                 <Wallet className="h-4 w-4 text-white" strokeWidth={2} />
             </div>
             <span className="text-lg font-semibold tracking-tight text-[#0A2540]">
-                Paluwagan
+                PondoChain
             </span>
         </Link>
     );

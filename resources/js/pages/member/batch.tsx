@@ -14,7 +14,6 @@ import {
 import { useState } from 'react';
 import { Amount } from '@/components/amount';
 import { Badge } from '@/components/ui/badge';
-import { CreateBatchDialog } from '@/components/ui/batches/create-batch';
 import { forget } from '@/routes/member';
 import { leave, resolve } from '@/routes/member/batches';
 
@@ -490,11 +489,10 @@ function BatchSection({
                                         </div>
                                     </div>
                                     <span
-                                        className={`text-xs font-medium ${
-                                            p.paid
+                                        className={`text-xs font-medium ${p.paid
                                                 ? 'text-emerald-600'
                                                 : 'text-[#0A2540]/50'
-                                        }`}
+                                            }`}
                                     >
                                         {p.paid ? 'Paid' : 'Scheduled'}
                                     </span>
@@ -560,7 +558,6 @@ export default function MemberBatch({ wallet, batches, flash }: Props) {
                                 Batches your wallet participates in.
                             </p>
                         </div>
-                        <CreateBatchDialog />
                     </div>
 
                     {batches.length === 0 ? (
